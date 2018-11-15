@@ -1,0 +1,106 @@
+:root {
+	--primary-red-color: #FF145B;
+	--secondary-red-color: #FFD0DE;
+}
+
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+.bottom-nav-wrapper {
+	width: 100vw;
+	position: fixed;
+	bottom: 0;
+	background: white;
+	border-top: 3px solid var(--primary-red-color);
+	box-shadow: 0 1px 15px #6c5a5185;
+}
+
+.menu-hidden {
+	top: calc(100vh - 56px);
+}
+
+.bottom-nav-main-btns {
+	list-style: none;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	margin-top: 10px;
+	margin-bottom: 10px;
+}
+
+input {
+	display: none;
+}
+
+.nav-btn {
+	background: black;
+}
+
+.bottom-nav-main-btns li label {
+	position: relative;
+}
+
+.burger,
+.burger::before,
+.burger::after {
+	content: '';
+	width: 28px;
+	height: 4px;
+	background: var(--primary-red-color);
+	border-radius: 5px;
+	display: block;
+}
+
+.burger::before {
+	transform: translateY(-8px);
+	position: initial;
+}
+
+.burger::after {
+	transform: translateY(4px);
+}
+
+#menu:checked ~ label {
+	background: red;
+}
+
+label::before {
+	content: '';
+	width: 41px;
+	height: 4px;
+	display: block;
+	position: absolute;
+	bottom: -5px;
+	left: -8px;
+	background-color: var(--secondary-red-color);
+	border-radius: 5px;
+	transform: scale(0,1);
+	transition: transform 150ms ease-in-out;
+}
+
+#home:checked ~ label::before {
+	width: 41px;
+	height: 4px;
+	bottom: -5px;
+	left: -8px;
+	transform: scale(1,1);
+}
+
+#search:checked ~ label::before {
+	width: 41px;
+	height: 4px;
+	bottom: -5px;
+	left: -7px;
+	transform: scale(1,1);
+}
+
+#profile:checked ~ label::before {
+	width: 42px;
+	height: 4px;
+	bottom: -5px;
+	left: -11px;
+	transform: scale(1,1);
+}
