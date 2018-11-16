@@ -1,2 +1,2 @@
 # pat-project
-:)
+Project
