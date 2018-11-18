@@ -1,11 +1,1 @@
-'use strict';
-
-// THIS IS JUST A TEST TO DEAL WITH BACK-END-SERVER
-// T: SAMULI
-
-while ( true ) {
-
- Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 4000);
- console.log('..');
-
-}
+'use strict';require('dotenv').config();const http = require ('http');const app = require('./app');const port = process.env.PORT || 3000const server = http.createServer(app);console.log ( `Listening to port ${port} ...` );server.listen(port);
