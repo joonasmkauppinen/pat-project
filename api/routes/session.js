@@ -7,11 +7,50 @@ const md7 = (i) => {
   return md5(i + process.env.SALT_1) + md5(process.env.SALT_2 + i + process.env.SALT_3 + i);
 }
 
+router.post('/check', (req,res,next) => {
+  let response = { success: 1, session_exists : 0 }
+  if ( typeof req.query.session_id == 'undefined' || typeof req.query.session_token == 'undefined' 
+  || req.query.session_id == '' || req.query.session_token == ''
+  || isNaN(parseFloat(req.query.session_id)) && isFinite(req.query.session_id) ) {
+    res.status(200).json(response);
+  }else{
+    db.query("SELECT sessionID FROM `sessions` WHERE `sessionID`=? AND `sessionToken`=? LIMIT 1", [req.query.session_id,req.query.session_token], (e,r,f) => {
+      if ( typeof r != 'undefined' && r.length == 1 ) {
+        response.session_exists=1;
+        res.status(200).json(response);
+      }else{
+        res.status(200).json(response);
+      }
+    });
+  }
+});
+
+router.post('/logout', (req,res,next) => {
+  if ( typeof req.query.session_id == 'undefined' || typeof req.query.session_token == 'undefined' 
+  || req.query.session_id == '' || req.query.session_token == ''
+  || isNaN(parseFloat(req.query.session_id)) && isFinite(req.query.session_id) ) {
+    res.status(200).json({ success: 0 });
+  }else{
+    db.query("SELECT sessionID FROM `sessions` WHERE `sessionID`=? AND `sessionToken`=? LIMIT 1", [req.query.session_id,req.query.session_token], (e,r,f) => {
+      if ( typeof r != 'undefined' && r.length == 1 ) {
+        
+        db.query("DELETE FROM `sessions` WHERE `sessionID`=? LIMIT 1", [req.query.session_id], (e,r,f) => {
+          res.status(200).json({ success: 1 });
+        });
+        
+      }else{
+        res.status(200).json({ success: 0 });
+      }
+    });
+  }
+});
+
 router.post('/login', (req,res,next) => {
 
   let response = { success : 0 }
 
-  if ( typeof req.query.username == 'undefined' || typeof req.query.password == 'undefined' ) {
+  if ( typeof req.query.username == 'undefined' || typeof req.query.password == 'undefined' 
+      || req.query.username == '' || req.query.password == '' ) {
     res.status(200).json({ success: 0, error: 'username and password is required'});
   }else{
 
@@ -35,7 +74,8 @@ router.post('/login', (req,res,next) => {
         });
 
       }else{
-        res.status(500).json((response));
+        response.error = 'Wrong username or password!';                      
+        res.status(200).json((response));
       }
       
     });  
