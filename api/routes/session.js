@@ -7,7 +7,7 @@ const md7 = (i) => {
   return md5(i + process.env.SALT_1) + md5(process.env.SALT_2 + i + process.env.SALT_3 + i);
 }
 
-router.get('/login', (req,res,next) => {
+router.post('/login', (req,res,next) => {
 
   let response = { success : 0 }
 
