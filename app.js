@@ -1,5 +1,7 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
+
 
 const routeUsers   = require('./api/routes/users');
 const routePosts   = require('./api/routes/posts');
@@ -8,6 +10,10 @@ const routeSession = require('./api/routes/session');
 //const cors = require('cors')
 
 //app.use(cors())
+
+
+
+app.use(bodyParser.urlencoded({ extended: true }))
 
 
 // CORS Handling

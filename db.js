@@ -10,5 +10,5 @@ const con = mysql.createConnection({
     connectionLimit: 10,
     supportBigNumbers: true
     });
-  
+
 module.exports = con;
