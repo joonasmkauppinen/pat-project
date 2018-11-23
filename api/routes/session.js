@@ -20,7 +20,7 @@ const isSession = ( sessionID, sessionToken ) => {
 
 const getSession = async ( id, token ) => {
   // return true / false
-  let promise = new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
   db.query(`SELECT sessionUserLID, userGroupLID, upName FROM sessions, users 
   LEFT JOIN linkingsPermissionToGroup ON linkingsPermissionToGroup.lptgGroupLID=users.userGroupLID
   LEFT JOIN userPermissions ON userPermissions.upID=linkingsPermissionToGroup.lptgPermissionLID
@@ -37,11 +37,11 @@ const getSession = async ( id, token ) => {
         console.log('NOW IM PASSING THE VALUE');
         resolve({permissions: permissionsArray});
         //return {permissions : permissionsArray};
+        //const result = await promise;
+        //return promise;        
     }
   });
 });
-  let result = await promise;
-  return promise;
 }
 router.post('/check', (req,res,next) => {
   let response = { success: 1, session_exists : 0, permissions : {} }
