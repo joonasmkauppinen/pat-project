@@ -36,13 +36,11 @@ const getSession = async ( id, token ) => {
         });
         console.log('NOW IM PASSING THE VALUE');
         resolve({permissions: permissionsArray});
-        //return {permissions : permissionsArray};
-        //const result = await promise;
-        //return promise;        
     }
   });
 });
 }
+
 router.post('/check', (req,res,next) => {
   let response = { success: 1, session_exists : 0, permissions : {} }
   if ( typeof req.body.session_id == 'undefined' || typeof req.body.session_token == 'undefined' 
@@ -65,15 +63,15 @@ router.post('/check', (req,res,next) => {
 });
 
 router.post('/logout', (req,res,next) => {
-  if ( typeof req.query.session_id == 'undefined' || typeof req.query.session_token == 'undefined' 
-  || req.query.session_id == '' || req.query.session_token == ''
-  || isNaN(parseFloat(req.query.session_id)) && isFinite(req.query.session_id) ) {
+  if ( typeof req.body.session_id == 'undefined' || typeof req.body.session_token == 'undefined' 
+  || req.body.session_id == '' || req.body.session_token == ''
+  || isNaN(parseFloat(req.body.session_id)) && isFinite(req.body.session_id) ) {
     res.status(200).json({ success: 0 });
   }else{
-    db.query("SELECT sessionID FROM `sessions` WHERE `sessionID`=? AND `sessionToken`=? LIMIT 1", [req.query.session_id,req.query.session_token], (e,r,f) => {
+    db.query("SELECT sessionID FROM `sessions` WHERE `sessionID`=? AND `sessionToken`=? LIMIT 1", [req.body.session_id,req.body.session_token], (e,r,f) => {
       if ( typeof r != 'undefined' && r.length == 1 ) {
         
-        db.query("DELETE FROM `sessions` WHERE `sessionID`=? LIMIT 1", [req.query.session_id], (e,r,f) => {
+        db.query("DELETE FROM `sessions` WHERE `sessionID`=? LIMIT 1", [req.body.session_id], (e,r,f) => {
           res.status(200).json({ success: 1 });
         });
         
