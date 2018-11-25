@@ -6,6 +6,8 @@ const routeUsers   = require('./api/routes/users');
 const routePosts   = require('./api/routes/posts');
 const routeSession = require('./api/routes/session');
 
+app.use(express.static('public'));
+
 app.use(bodyParser.urlencoded({ extended: true }))
 
 

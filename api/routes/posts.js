@@ -69,14 +69,14 @@ router.post('/getcontent', (req,res,next) => {
       }
     }
   
-
-  db.query("SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName FROM posts, users WHERE postAddedBy=users.userID AND ("+queryWhereParams+")", (e,r,f) => {
+  db.query("SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName, users.userID FROM posts, users WHERE postAddedBy=users.userID AND ("+queryWhereParams+")", (e,r,f) => {
     let response = { success: 0 };
     if ( e == null) {
       response.posts_count  = r.length;
       response.post_data = {}
       r.forEach((i) => {
-        const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName, 'url' : i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post }
+        const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName
+          , 'url' : i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png' }
         response.post_data[i.postID] = ( dataItem );
       });
       response.success = 1;
