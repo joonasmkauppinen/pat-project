@@ -3,14 +3,16 @@ const  router = express.Router();
 const      db = require('../../db');
 
 router.get('/', (req,res,next) => {
-  let response = { success : 1 }
+  let response = { success : 0 }
   db.query("SELECT * FROM users", (e,r,f) => {
-    response.users_count = r.length;
-    response.users = [];
-    r.forEach((i) => {
-      const addThis = ({ 'id' : i.userID, 'name' : i.userName, 'time_join' : '999 days ago', 'last_seen' : '999 days ago' });
-      response.users.push ( addThis );
-    });
+    if ( typeof r != 'undefined' ) {
+      response.users_count = r.length;
+      response.users = [];
+      r.forEach((i) => {
+        const addThis = ({ 'id' : i.userID, 'name' : i.userName, 'time_join' : '999 days ago', 'last_seen' : '999 days ago' });
+        response.users.push ( addThis );
+      });
+    }
     res.status(200).json((response));
   });
 });

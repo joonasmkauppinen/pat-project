@@ -2,6 +2,8 @@
 
 const mysql = require('mysql2');
 
+console.log('Creating new DB Connection ...');
+
 const con = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,

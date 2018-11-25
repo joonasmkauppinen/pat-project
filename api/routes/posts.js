@@ -39,7 +39,8 @@ function timeAgo(ts) {
 
 
 
-router.get('/', (req,res,next) => {
+router.post('/', (req,res,next) => {
+  // ** REQUIRE SESSION ! WITH SOME PARAMS
   let response = { success : 1 }
   db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
     response.posts_count  = r.length;
@@ -51,10 +52,13 @@ router.get('/', (req,res,next) => {
   });
 });
 
-router.get('/postdata', (req,res,next) => {
+router.post('/getcontent', (req,res,next) => {
+
   let response = { success : 1 };
   
-  const items = req.query.items.split("-");
+  console.log(req.body);
+
+  const items = req.body.items.split("-");
   let queryWhereParams = '';
   if ( items.length > 0 ) {
     for (i=0; i<items.length; i++){
@@ -67,12 +71,16 @@ router.get('/postdata', (req,res,next) => {
   
 
   db.query("SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName FROM posts, users WHERE postAddedBy=users.userID AND ("+queryWhereParams+")", (e,r,f) => {
-    response.posts_count  = r.length;
-    response.post_data = {}
-    r.forEach((i) => {
-      const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName, 'url' : i.postMediaURI, 'media_type' : i.postMediaType }
-      response.post_data[i.postID] = ( dataItem );
-    });
+    let response = { success: 0 };
+    if ( e == null) {
+      response.posts_count  = r.length;
+      response.post_data = {}
+      r.forEach((i) => {
+        const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName, 'url' : i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post }
+        response.post_data[i.postID] = ( dataItem );
+      });
+      response.success = 1;
+    }
     res.status(200).json((response));
   });
 });
