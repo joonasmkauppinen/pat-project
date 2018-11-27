@@ -50,4 +50,20 @@ app.use((error, req, res, next) => {
   });
 });
 
+const db = require('./db');
+
+setInterval(() => {
+   console.log('[STAY-ALIVE] Scvript:');
+   db.query("SELECT userID FROM users WHERE userID=1", '', (e,r,f) => {
+     if ( e == null ) {
+       if ( r.length == 1 ) {
+         console.log('DB_connection_status = OK');
+       }else{
+        console.log('DB_connection_status = ERROR');
+       }
+     }else{ console.log('DB_connection_status = ERROR'); }
+  });
+  }, 60000);
+
+
 module.exports = app;

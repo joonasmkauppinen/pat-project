@@ -79,3 +79,5 @@ typings/
 
 # Public folder contents 
 public/
+# Keys folder contents 
+keys/
