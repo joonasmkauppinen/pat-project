@@ -2,13 +2,14 @@
 
 require('dotenv').config();
 
+/*
 const fs = require("fs");
 const options = {
     key: fs.readFileSync("keys/key.pem"),
     cert: fs.readFileSync("keys/cert.pem"),
-    passphrase: 'kullipilluvittu'
+    passphrase: 'none'
   };
-
+*/
 
 const http = require ('http');
 const app = require('./app');
