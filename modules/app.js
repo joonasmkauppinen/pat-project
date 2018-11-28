@@ -4,9 +4,9 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
-const routeUsers   = require('./api/routes/users');
-const routePosts   = require('./api/routes/posts');
-const routeSession = require('./api/routes/session');
+const routeUsers   = require('../api/routes/users');
+const routePosts   = require('../api/routes/posts');
+const routeSession = require('../api/routes/session');
 
 app.use(express.static('public'));
 

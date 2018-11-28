@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../db');
+const db = require('../../modules/db');
 
 
 const unixTimeAsDate = (unix_timestamp) => {
@@ -35,9 +35,7 @@ const timeAgo = (ts) => {
   if (seconds > 1) {
     return Math.floor(seconds) + " seconds ago";
     }
-    
 }
-
 
 /**
  * @api {post} /posts/ Get Array of Post IDs with Custom filtering.
@@ -48,7 +46,9 @@ const timeAgo = (ts) => {
  * @apiParam {String} session_token Session Token.
  * @apiParam {String} filter_by (optional) ['Home', 'Animal', 'Tag', 'User' ]
  * @apiParam {String} filter_by (optional) ['Home', 'Animal', 'Tag', 'User' ]
- *
+ * 
+ * @apiPermission LOGGED_IN
+ * 
  * @apiSuccess {Boolean} success (true) API Call succeeded.
  * @apiSuccess {Array} post_data Array of Post item objects, array key defined by Post ID
  */
@@ -76,6 +76,7 @@ router.post('/', (req,res,next) => {
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
  * @apiSuccess {Array} post_data Array of Post item objects, array key defined by Post ID
+ * 
  * @apiPermission LOGGED_IN
  */
 router.post('/getcontent', (req,res,next) => {
@@ -109,18 +110,23 @@ router.post('/getcontent', (req,res,next) => {
 });
 
 
-router.get('/:userID', (req,res,next) => {
-  const id = req.params.userID;
-  if ( id === '' ) {
-    res.status(500).json({
-      message: 'ID is not specified'
-    });
-  }else{
-    res.status(200).json({
-      message: 'User ID Data from user' + id
-    });
-  }
+/**
+ * @api {delete} /posts/delete Delete post by Post ID
+ * @apiName Delete Post
+ * @apiGroup Posts
+ *
+ * @apiParam {Integer} session_id Session ID.
+ * @apiParam {String} session_token Session Token.
+ * @apiParam {Integer} post_id Post ID to be deleted.
+ *
+ * @apiSuccess {Boolean} success (true) API Call succeeded, post deleted.
+ * 
+ * @apiPermission POST_DELETE
+ */
+router.delete('/posts/delete', (req,res,next) => {
+  res.status(200).json( {do: 'this'} );
 });
+
 
 router.post('/', (req,res,next) => {
   res.status(200).json({

@@ -1,11 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../db');
-const md5 = require('md5');
-
-const md7 = (i) => {
-  return md5(i + process.env.SALT_1) + md5(process.env.SALT_2 + i + process.env.SALT_3 + i);
-};
+const db = require('../../modules/db');
+const md7 = require('../../modules/md7');
   
 const isSession = ( sessionID, sessionToken ) => {
   // return true / false
@@ -50,6 +46,8 @@ const getSession = async ( id, token ) => {
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
  * @apiSuccess {Array} permissions List of user's permissions as an array.
+ * 
+ * @apiPermission LOGGED_IN
  */
 router.post('/check', (req,res,next) => {
   let response = { success: 1, session_exists : 0, permissions : {} }
@@ -81,6 +79,8 @@ router.post('/check', (req,res,next) => {
  * @apiParam {String} session_token Session Token.
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * 
+ * @apiPermission LOGGED_IN
  */
 router.post('/logout', (req,res,next) => {
   if ( typeof req.body.session_id == 'undefined' || typeof req.body.session_token == 'undefined' 
@@ -111,6 +111,8 @@ router.post('/logout', (req,res,next) => {
  * @apiSuccess {Boolean} success (true) API Call succeeded.
  * @apiSuccess {Integer} session_id Session ID.
  * @apiSuccess {String} token Session token.
+ * 
+ * @apiPermission HAS_ACCOUNT
  */
 router.post('/login', (req,res,next) => {
   let response = { success : false }
