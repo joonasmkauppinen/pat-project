@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
@@ -10,13 +12,12 @@ app.use(express.static('public'));
 
 app.use(bodyParser.urlencoded({ extended: true }))
 
-
 app.use((req,res,next) => {
   console.log('New server request: ');
   next();
   });
 
-// CORS Handling
+/* CORS Handling: allowing oring/headers (*), allowing several methods */
 app.use((req,res,next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "*");
@@ -27,33 +28,32 @@ app.use((req,res,next) => {
     next();
 });
 
-// Import Routes
+/* Import routes */
 app.use('/users',   routeUsers);
 app.use('/posts',   routePosts);
 app.use('/session', routeSession);
 
 
-// If no route is not found, throw `Not found` error:
+// If no route is found, throw `Not found` error:
 app.use((req, res, next) => {
-  const error = new Error('Not found');
+  const error = new Error('Requested path not found - please check your command');
   error.status = 404;
   next(error);
-})
-
-// Display error JSON
-app.use((error, req, res, next) => {
-  res.status(error.status || 500);
-  res.json({
-    error: {
-      message: error.message
-    }
-  });
 });
+
+// Display error as JSON response
+app.use((e, req, res, next) => {
+  res.status(e.status || 500);
+  res.json({ success : 0, error: e.message });
+});
+
+// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+// *** REMOVE THIS IN THE PRODUCTION VERSION AND WHEN DB CONNECTION ISSUE IS FIXED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
 const db = require('./db');
 
 setInterval(() => {
-   console.log('[STAY-ALIVE] Scvript:');
+   console.log('[STAY-ALIVE] Script:');
    db.query("SELECT userID FROM users WHERE userID=1", '', (e,r,f) => {
      if ( e == null ) {
        if ( r.length == 1 ) {
@@ -65,5 +65,7 @@ setInterval(() => {
   });
   }, 60000);
 
+  // *** <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< REMOVE THIS IN THE PRODUCTION VERSION AND WHEN DB CONNECTION ISSUE IS FIXED
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 module.exports = app;

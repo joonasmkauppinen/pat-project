@@ -77,7 +77,7 @@ typings/
 # FuseBox cache
 .fusebox/
 
-# Public folder contents 
+# ignore folders:
 public/
-# Keys folder contents 
 keys/
+apidoc/

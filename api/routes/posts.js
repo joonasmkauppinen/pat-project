@@ -35,10 +35,23 @@ const timeAgo = (ts) => {
   if (seconds > 1) {
     return Math.floor(seconds) + " seconds ago";
     }
+    
 }
 
 
-
+/**
+ * @api {post} /posts/ Get Array of Post IDs with Custom filtering.
+ * @apiName Get Post IDs Array
+ * @apiGroup Posts
+ *
+ * @apiParam {Integer} session_id Session ID.
+ * @apiParam {String} session_token Session Token.
+ * @apiParam {String} filter_by (optional) ['Home', 'Animal', 'Tag', 'User' ]
+ * @apiParam {String} filter_by (optional) ['Home', 'Animal', 'Tag', 'User' ]
+ *
+ * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * @apiSuccess {Array} post_data Array of Post item objects, array key defined by Post ID
+ */
 router.post('/', (req,res,next) => {
   // ** REQUIRE SESSION ! WITH SOME PARAMS
   let response = { success : 1 }
@@ -52,12 +65,22 @@ router.post('/', (req,res,next) => {
   });
 });
 
+/**
+ * @api {post} /posts/getcontent Get Content of Posts by ID as an Object
+ * @apiName getcontent
+ * @apiGroup Posts
+ *
+ * @apiParam {Integer} session_id Session ID.
+ * @apiParam {String} session_token Session Token.
+ * @apiParam {String} items Post IDs, separated with -
+ *
+ * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * @apiSuccess {Array} post_data Array of Post item objects, array key defined by Post ID
+ * @apiPermission LOGGED_IN
+ */
 router.post('/getcontent', (req,res,next) => {
-
-  let response = { success : 1 };
-  
+  let response = { success : false };  
   console.log(req.body);
-
   const items = req.body.items.split("-");
   let queryWhereParams = '';
   if ( items.length > 0 ) {
@@ -68,9 +91,7 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-  
   db.query("SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName, users.userID FROM posts, users WHERE postAddedBy=users.userID AND ("+queryWhereParams+")", (e,r,f) => {
-    let response = { success: 0 };
     if ( e == null) {
       response.posts_count  = r.length;
       response.post_data = {}
@@ -79,7 +100,9 @@ router.post('/getcontent', (req,res,next) => {
           , 'url' : i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png' }
         response.post_data[i.postID] = ( dataItem );
       });
-      response.success = 1;
+      response.success = true;
+    }else{
+      response.error = 'Database query failed.';
     }
     res.status(200).json((response));
   });
