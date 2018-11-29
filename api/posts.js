@@ -103,8 +103,10 @@ router.post('/getcontent', (req,res,next) => {
       response.post_data = {}
       r.forEach((i) => {
         const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName
-          , 'url' : 'img/' + i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png'
-          , 'tags' : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'] }
+          , url : 'img/' + i.postMediaURI, media_type : i.postMediaType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
+          , tags : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'], my_rate: ''
+          , comments : 5
+          , latest_comment : { sender : 'samuli_v', added_ago: '999 mins ago', comment: 'bla bla bla this is a big bla bla bla and you may consider shortening this in frontend, right? bla bla bla bla bla long enough? bla bla bla bla' } }
         response.post_data[i.postID] = ( dataItem );
       });
       response.success = true;
