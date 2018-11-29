@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../modules/db');
-
+const db = require('../modules/db');
+const auth = require('../modules/auth');
 
 const unixTimeAsDate = (unix_timestamp) => {
   const date = new Date(unix_timestamp*1000);
@@ -53,15 +53,20 @@ const timeAgo = (ts) => {
  * @apiSuccess {Array} post_data Array of Post item objects, array key defined by Post ID
  */
 router.post('/', (req,res,next) => {
-  // ** REQUIRE SESSION ! WITH SOME PARAMS
-  let response = { success : 1 }
-  db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
-    response.posts_count  = r.length;
-    response.posts = [];
-    r.forEach((i) => {
-      response.posts.push ( i.postID );
-    });
-    res.status(200).json((response));
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      let response = { success : 1 }
+      db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
+        response.posts_count  = r.length;
+        response.posts = [];
+        r.forEach((i) => {
+          response.posts.push ( i.postID );
+        });
+        res.status(200).json((response));
+      });
+    }else{
+      res.status(400).json( { success: 0, error: 'No valid session.' } );
+    }
   });
 });
 
@@ -98,7 +103,7 @@ router.post('/getcontent', (req,res,next) => {
       response.post_data = {}
       r.forEach((i) => {
         const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName
-          , 'url' : i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png' }
+          , 'url' : 'img/' + i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png' }
         response.post_data[i.postID] = ( dataItem );
       });
       response.success = true;

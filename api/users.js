@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../../modules/db');
-const md7 = require('../../modules/md7');
+const db = require('../modules/db');
+const md7 = require('../modules/md7');
 
 router.get('/', (req,res,next) => {
   let response = { success : 0 }

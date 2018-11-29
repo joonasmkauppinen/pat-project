@@ -4,9 +4,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
-const routeUsers   = require('../api/routes/users');
-const routePosts   = require('../api/routes/posts');
-const routeSession = require('../api/routes/session');
+const routeUsers   = require('../api/users');
+const routePosts   = require('../api/posts');
+const routeSession = require('../api/session');
+const routeTags    = require('../api/tags');
 
 app.use(express.static('public'));
 
@@ -32,7 +33,7 @@ app.use((req,res,next) => {
 app.use('/users',   routeUsers);
 app.use('/posts',   routePosts);
 app.use('/session', routeSession);
-
+app.use('/tags',    routeTags);
 
 // If no route is found, throw `Not found` error:
 app.use((req, res, next) => {
@@ -53,7 +54,7 @@ app.use((e, req, res, next) => {
 const db = require('./db');
 
 setInterval(() => {
-   console.log('[STAY-ALIVE] Script:');
+   console.log('[MEOW!] Meow is a script that annoys and pisses you off. It is a loop that continues and continues calling the database.');
    db.query("SELECT userID FROM users WHERE userID=1", '', (e,r,f) => {
      if ( e == null ) {
        if ( r.length == 1 ) {

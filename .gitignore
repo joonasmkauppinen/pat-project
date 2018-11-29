@@ -78,7 +78,7 @@ typings/
 .fusebox/
 
 # ignore folders:
-public/
 keys/
 apidoc/
 ad.bat
+public/
