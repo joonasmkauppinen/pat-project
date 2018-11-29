@@ -39,7 +39,7 @@ const timeAgo = (ts) => {
 
 /**
  * @api {post} /posts/ Get Array of Post IDs with Custom filtering.
- * @apiName Get Post IDs Array
+ * @apiName Get Post IDs Array [IN PROGRESS]
  * @apiGroup Posts
  *
  * @apiParam {Integer} session_id Session ID.
@@ -103,7 +103,8 @@ router.post('/getcontent', (req,res,next) => {
       response.post_data = {}
       r.forEach((i) => {
         const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName
-          , 'url' : 'img/' + i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png' }
+          , 'url' : 'img/' + i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png'
+          , 'tags' : ['Demo', 'Please', 'Do', 'This'], 'channels' : ['DemoChannel1', 'DemoChannel2'] }
         response.post_data[i.postID] = ( dataItem );
       });
       response.success = true;

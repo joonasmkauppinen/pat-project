@@ -4,7 +4,8 @@ const db = require('./db');
 const getSession = async ( id, token ) => {
     // return true / false
     return new Promise((resolve, reject) => {
-    db.query(`SELECT sessionUserLID, userGroupLID, upName FROM sessions, users 
+    db.query(`SELECT sessionUserLID, userGroupLID, upName 
+    FROM sessions, users 
     LEFT JOIN linkingsPermissionToGroup ON linkingsPermissionToGroup.lptgGroupLID=users.userGroupLID
     LEFT JOIN userPermissions ON userPermissions.upID=linkingsPermissionToGroup.lptgPermissionLID
     WHERE sessions.sessionUserLID=users.userID AND sessionID=? AND sessionToken=?`, [id, token], (e,r,f) => {    
