@@ -104,7 +104,7 @@ router.post('/getcontent', (req,res,next) => {
       r.forEach((i) => {
         const dataItem = { added : unixTimeAsDate(i.postAddTime) , added_ago : timeAgo(i.postAddTime), addedby_user : i.userName
           , 'url' : 'img/' + i.postMediaURI, 'media_type' : i.postMediaType, 'post' : i.post, 'user_pic' : 'img/usr/' + i.userID + '.png'
-          , 'tags' : ['Demo', 'Please', 'Do', 'This'], 'channels' : ['DemoChannel1', 'DemoChannel2'] }
+          , 'tags' : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'] }
         response.post_data[i.postID] = ( dataItem );
       });
       response.success = true;
