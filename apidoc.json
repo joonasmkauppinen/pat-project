@@ -1,7 +1,7 @@
 {
-  "name": "PAT.api",
-  "version": "0.1.0",
-  "description": "PAT.",
+  "name": "PAT - a place for pets",
+  "version": "1.0.0",
+  "description": "PAT.api",
   "title": "PAT.api",
   "url" : ""
 }

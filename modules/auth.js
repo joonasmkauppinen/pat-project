@@ -23,22 +23,32 @@ const getSession = async ( id, token ) => {
     });
   }
 
+/* Checks is there valid Session Cookies provided in the REQuest */
+const isSessionCookiesSet = (request) => {
+  if ( typeof request.body.session_id == 'undefined' || typeof request.body.session_token == 'undefined' 
+       || request.body.session_id == '' || request.body.session_token == ''
+       || isNaN(parseFloat(request.body.session_id)) && isFinite(request.body.session_id) 
+       || request.body.session_token.length != 64 ) {
+    return false;
+  }else{
+    return true;
+  }
+};
+
 /* ---------------------------------------------------------------------------------------------------------+
-[F] AUTH                                                                                                    |
+ |  auth                                                                                                    |
  +----------------------------------------------------------------------------------------------------------+ 
- |  This function will automatically check the session from req.                                            |
+ |  This function will automatically check the session from cookies & request.                              |
  |                                                                                                          |
-[1] RESPONSE: If session exists the response will be:                                                       |
+ *  RESPONSE: If session exists the response will be:                                                       |
  |  { session: true, session_id: 9, session_token: 'az41..', permissions: ['POST_DELETE', 'USER_DELETE'] }  |
  |                                                                                                          |
-[0] RESPONSE: If no session response will be:                                                               |
+ *  RESPONSE: If no session response will be:                                                               |
  |   { session: false }                                                                                     |
  +-------------------------------------------------------------------------------------------------------- */
 const auth = async (req) => {
     return new Promise((resolve, reject) => {
-        if ( typeof req.body.session_id == 'undefined' || typeof req.body.session_token == 'undefined' 
-        || req.body.session_id == '' || req.body.session_token == ''
-        || isNaN(parseFloat(req.body.session_id)) && isFinite(req.body.session_id) ) {
+        if ( isSessionCookiesSet(req) ) {
             resolve( { session: false } );
         }else{
             getSession(req.body.session_id, req.body.session_token ).then( (r) => {

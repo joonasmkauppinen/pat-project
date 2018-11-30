@@ -5,15 +5,19 @@ const md7 = require('../modules/md7');
 const auth = require('../modules/auth');
 
 /**
- * @api {post} /session/check Check is session valid and get permissions.
+ * @api {post} /session/check Check is session valid and get permissions
  * @apiName check
+ * @apiVersion 1.0.0
  * @apiGroup Session
  *
  * @apiParam {Integer} session_id Session ID.
  * @apiParam {String} session_token Session Token.
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
- * @apiSuccess {Array} permissions List of user's permissions as an array.
+ * @apiSuccess {String[]} permissions List of user's permissions as a String Array.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
  * 
  * @apiPermission LOGGED_IN
  */
@@ -30,12 +34,16 @@ router.post('/check', (req,res,next) => {
 /**
  * @api {post} /session/logout Log out
  * @apiName logout
+ * @apiVersion 1.0.0
  * @apiGroup Session
  *
  * @apiParam {Integer} session_id Session ID.
  * @apiParam {String} session_token Session Token.
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
  * 
  * @apiPermission LOGGED_IN
  */
@@ -56,8 +64,9 @@ router.post('/logout', (req,res,next) => {
 });
 
 /**
- * @api {post} /session/login Log in to the system
+ * @api {post} /session/login Log in
  * @apiName login
+ * @apiVersion 1.0.0
  * @apiGroup Session
  *
  * @apiParam {String} username Username.
@@ -66,6 +75,9 @@ router.post('/logout', (req,res,next) => {
  * @apiSuccess {Boolean} success (true) API Call succeeded.
  * @apiSuccess {Integer} session_id Session ID.
  * @apiSuccess {String} token Session token.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
  * 
  * @apiPermission HAS_ACCOUNT
  */

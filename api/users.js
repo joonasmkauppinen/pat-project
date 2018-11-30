@@ -90,14 +90,18 @@ const isEmailAvailable = async (emailAddress) => {
   }
 
 /**
- * @api {get} /users/username-available/:id Check is Username free
+ * @api {get} /users/username-available/:id Check is Username available
  * @apiName username-available
+ * @apiVersion 1.0.0
  * @apiGroup Users
  *
  * @apiParam {String} userName Username for checking availability.
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded.
- * @apiSuccess {Boolean} available Is username available
+ * @apiSuccess {Boolean} available Is username available.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
  * 
  * @apiPermission everyone
  */
@@ -126,6 +130,7 @@ router.get('/username-available/:userName', (req,res,next) => {
 /**
  * @api {post} /users/create-user-account Create new User Account
  * @apiName create-user-account
+ * @apiVersion 1.0.0
  * @apiGroup Users
  *
  * @apiParam {String} username Username.
@@ -133,6 +138,12 @@ router.get('/username-available/:userName', (req,res,next) => {
  * @apiParam {String} email User Email address.
  * 
  * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * @apiSuccess {Boolean} session TRUE if Automatic Session Creation is Enabled, otherwise FALSE
+ * @apiSuccess {Integer} session_id Session ID  (this value returned only if Automatic Session Creation is Enabled)
+ * @apiSuccess {String} token Session Token (this value returned only if Automatic Session Creation is Enabled)
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
  * 
  * @apiPermission everyone
  */
