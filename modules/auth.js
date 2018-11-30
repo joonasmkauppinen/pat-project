@@ -48,7 +48,7 @@ const isSessionCookiesSet = (request) => {
  +-------------------------------------------------------------------------------------------------------- */
 const auth = async (req) => {
     return new Promise((resolve, reject) => {
-        if ( isSessionCookiesSet(req) ) {
+        if ( !isSessionCookiesSet(req) ) {
             resolve( { session: false } );
         }else{
             getSession(req.body.session_id, req.body.session_token ).then( (r) => {
