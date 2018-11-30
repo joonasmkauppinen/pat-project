@@ -144,7 +144,7 @@ router.post('/', (req,res,next) => {
  * 
  * @apiPermission POST_UPLOAD
  */
-router.post('/posts/upload', (req,res,next) => {
+router.post('/upload', (req,res,next) => {
   res.status(200).json( {do: 'this'} );
 });
 
