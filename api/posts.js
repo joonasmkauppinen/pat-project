@@ -4,6 +4,9 @@ const db = require('../modules/db');
 const auth = require('../modules/auth');
 const formatTime = require('../modules/time-formatting');
 
+const multer = require('multer');
+const upload = multer({dest: './public/img/'});
+
 /**
  * @api {post} /posts/ Get Array of Post IDs with Custom filtering
  * @apiName posts
@@ -94,7 +97,6 @@ router.post('/getcontent', (req,res,next) => {
   });
 });
 
-
 /**
  * @api {delete} /posts/delete Delete post by Post ID #_IN_PROGRESS_#
  * @apiName delete
@@ -116,14 +118,6 @@ router.delete('/posts/delete', (req,res,next) => {
   res.status(200).json( {do: 'this'} );
 });
 
-
-router.post('/', (req,res,next) => {
-  res.status(200).json({
-    message: 'Handling POST requests to /users'
-  });
-});
-
-
 /**
  * @api {post} /posts/upload Upload new Post #_IN_PROGRESS_#
  * @apiName upload
@@ -144,10 +138,13 @@ router.post('/', (req,res,next) => {
  * 
  * @apiPermission POST_UPLOAD
  */
+router.post('/upload', upload.single('upload_file'), (req,res,next) => {
+  next();
+});
 router.post('/upload', (req,res,next) => {
+  console.log(req.file);
   res.status(200).json( {do: 'this'} );
 });
-
 
 router.post('/', (req,res,next) => {
   res.status(200).json({
