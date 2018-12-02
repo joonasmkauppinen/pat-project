@@ -1,5 +1,7 @@
 'use strict';
 
+const systemTimestamp = () => Math.floor(Date.now() / 1000);
+
 /* Convert UNIX timestamp --> dd.mm.yyyy HH:mm*/
 const unixTimeAsDate = (unix_timestamp) => {
     const date = new Date(unix_timestamp*1000);
@@ -34,4 +36,4 @@ const timeAgo = (ts) => {
         }   
   }
 
-module.exports = { timeAgo, unixTimeAsDate };
+module.exports = { timeAgo, unixTimeAsDate, systemTimestamp };

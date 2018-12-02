@@ -17,7 +17,7 @@ const getSession = async ( id, token ) => {
           r.forEach( (i) => {
             permissionsArray.push(i.upName);
           });
-          resolve( { session: true, permissions: permissionsArray} );
+          resolve( { session: true, user_id: r[0].sessionUserLID, permissions: permissionsArray} );
         }
       });
     });
@@ -53,7 +53,7 @@ const auth = async (req) => {
         }else{
             getSession(req.body.session_id, req.body.session_token ).then( (r) => {
                if ( r.session ) {
-                 resolve( { session: true, permissions : r.permissions, session_id : parseFloat(req.body.session_id), session_token : req.body.session_token } );
+                 resolve( { session: true, user_id: r.user_id, permissions : r.permissions, session_id : parseFloat(req.body.session_id), session_token : req.body.session_token } );
                }else{
                  resolve( { session: false } );
                }

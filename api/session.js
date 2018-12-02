@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../modules/db');
 const md7 = require('../modules/md7');
 const auth = require('../modules/auth');
+const tf = require('../modules/time-formatting');
 
 /**
  * @api {post} /session/check Check is session valid and get permissions
@@ -91,11 +92,10 @@ router.post('/login', (req,res,next) => {
     const password = req.body.password;
     db.query("SELECT userID FROM users WHERE `userName`=? AND `userPassword`='" + md7(password) + "' LIMIT 1", [username], (e,r,f) => {
       if (r.length == 1 ) {
-        const token = md7( Math.floor((Math.random() * 10000) + 1) + username + Math.floor((Math.random() * 10000) + 1) + username );
+        const token = md7( Math.floor((Math.random() * 10000) + 1) + username + Math.floor((Math.random() * 10000) + 1) + username + tf.systemTimestamp() );
         const userID = r[0].userID;
-        const timestampNow = Math.floor(Date.now() / 1000);
         db.query("INSERT INTO `sessions` SET sessionUserLID=?, sessionStartTime=?, sessionLastActive=?, sessionToken=?, sessionIP=?"
-        , [userID, timestampNow, timestampNow, token, req.connection.remoteAddress]
+        , [userID, tf.systemTimestamp(), tf.systemTimestamp(), token, req.connection.remoteAddress]
         , (e,r,f) => {
             if ( e == null ) {
               response.success = true;

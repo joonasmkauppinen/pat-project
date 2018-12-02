@@ -3,7 +3,9 @@ const router = express.Router();
 const db = require('../modules/db');
 const auth = require('../modules/auth');
 const formatTime = require('../modules/time-formatting');
+const tag = require('../modules/tag');
 
+const fs = require('fs');
 const multer = require('multer');
 const upload = multer({dest: './public/img/'});
 
@@ -30,19 +32,23 @@ const upload = multer({dest: './public/img/'});
  */
 router.post('/', (req,res,next) => {
   auth(req).then( (r) => {
+    
+    let filtering = 'landing';
     if ( r.session ) {
-      let response = { success : 1 }
-      db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
-        response.posts_count  = r.length;
-        response.posts = [];
-        r.forEach((i) => {
-          response.posts.push ( i.postID );
-        });
-        res.status(200).json((response));
-      });
-    }else{
-      res.status(400).json( { success: 0, error: 'No valid session.' } );
+      // enable other filtering methods here...
     }
+
+    let response = { success : 1 }
+    db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
+      response.posts_count  = r.length;
+      response.posts = [];
+      r.forEach((i) => {
+        response.posts.push ( i.postID );
+      });
+      res.status(200).json((response));
+    });
+
+
   });
 });
 
@@ -83,7 +89,7 @@ router.post('/getcontent', (req,res,next) => {
       response.post_data = {}
       r.forEach((i) => {
         const dataItem = { added : formatTime.unixTimeAsDate(i.postAddTime) , added_ago : formatTime.timeAgo(i.postAddTime), addedby_user : i.userName
-          , url : 'img/' + i.postMediaURI, media_type : i.postMediaType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
+          , url : 'img/' + i.postMediaURI, media_type : i.postMediaType, mime: i.postMimeType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
           , tags : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'], my_rate: ''
           , comments : 5
           , latest_comment : { sender : 'samuli_v', added_ago: '999 mins ago', comment: 'bla bla bla this is a big bla bla bla and you may consider shortening this in frontend, right? bla bla bla bla bla long enough? bla bla bla bla' } }
@@ -128,8 +134,8 @@ router.delete('/posts/delete', (req,res,next) => {
  * @apiParam {String} session_token Session Token.
  * 
  * @apiParam {File} upload_file A file to upload
- * @apiParam {String} post Text of the post
- * @apiParam {String} [tags] Tags separated by space (max 5).
+ * @apiParam {String} [description] Post description
+ * @apiParam {String} [tags] Tags separated by space
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded, a new post is uploaded
  * 
@@ -139,11 +145,87 @@ router.delete('/posts/delete', (req,res,next) => {
  * @apiPermission POST_UPLOAD
  */
 router.post('/upload', upload.single('upload_file'), (req,res,next) => {
-  next();
+  //console.log(req.file);
+  //req.file originalname, mimetype, filename, path
+
+  const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 
+  'video/x-m4v', 'video/mpeg', 'video/mp4', 'video/ogg', 'video/webm', 'video/quicktime'];
+  // 'audio/x-aac', 'audio/midi', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/x-wav'
+  if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
+    const dotted = req.file.originalname.split('.');
+    if ( dotted != null && dotted.length >= 0 ) {
+      const extension = dotted[dotted.length-1];
+      req.mimetype = req.file.mimetype;
+      req.mediatype = req.file.mimetype.substring(0,1);
+      next();
+    }else{
+      res.status(200).json( {success:false, error: 'Other error'} );
+    }
+    
+  }else{
+    res.status(200).json( {success:false, error: 'File Type not supported.'} );
+  }  
+});
+router.post('/upload',(req,res,next) => {
+  let postDescription = '';
+  if ( typeof req.body.description != 'undefined' ) {
+    postDescription = req.body.description;
+    if ( postDescription.length > process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH ){
+        res.status(200).json( {success:false, error: 'Description is too long. Maximum length allowed is ' + process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH + ' characters.'} );
+      }else{
+        req.description = postDescription;
+        next();
+      }
+    }else{
+      req.description = '';
+      next();
+    }
 });
 router.post('/upload', (req,res,next) => {
-  console.log(req.file);
-  res.status(200).json( {do: 'this'} );
+  if ( typeof req.body.tags != 'tags' ) {
+    const tg = req.body.tags.split(' ');
+    req.tags = [];
+    if ( tg.length > 0 ) {
+      for(let i=0;i<tg.length;i++){
+        if ( tag.isAcceptableTag(tg[i]) ) {
+          req.tags.push(tg[i]);
+        }
+      }
+    }
+  }
+  next();
+});
+router.post('/upload',(req,res,next) => {
+  auth(req).then((r) => {
+    console.log('authing');
+    console.log(req.body);
+    //console.log(r);
+    if ( r.session ) {
+      db.query("INSERT INTO `posts` (postAddTime, postAddedBy, postMediaType, postMimeType, postMediaURI, postColor, post) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+               [formatTime.systemTimestamp(), r.user_id, req.mediatype, req.mimetype, 'uri', 'face00', req.description]
+               , (e,r,f) => {
+        if ( e == null ) {
+            // Add tags to the post
+            if ( req.tags.length > 0 ) {
+              console.log(req.tags);
+              tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
+                if ( r == true ) {
+                  res.status(200).json( { success:true } );
+                }else{
+                  res.status(200).json( { success:true, warning: 'error when adding tags' } );
+                }
+              });
+              }else{
+                res.status(200).json( { success:true } );
+              }
+          }else{
+            res.status(200).json( { success:false, error: 'Database query error.' } );
+          }
+      });      
+    }else{
+      res.status(200).json( {success:false, error: 'You are not logged in.'} );
+    }
+  });
 });
 
 router.post('/', (req,res,next) => {
