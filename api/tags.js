@@ -4,7 +4,7 @@ const db = require('../modules/db');
 const auth = require('../modules/auth');
 
 /**
- * @api {post} /tags/ Get Tags #_IN_PROGRESS_#
+ * @api {post} /tags/ Get Tags
  * @apiName tags
  * @apiVersion 1.0.0
  * @apiGroup Tags
@@ -34,11 +34,19 @@ router.post('/', (req,res,next) => {
           }
         }
         let resultsOrderingType = 0;
+        let sqlSearchBy = ''
         if ( typeof req.body.order_by != 'undefined' ) {
             if ( req.body.order_by == 'alphabetical' ) resultsOrderingType = 1;
         }
-        // SELECT tag, COUNT(lttpID) FROM tags, linkingsTagToPost WHERE tagID=lttpTagLID GROUP BY tag
-        db.query("SELECT tag, COUNT(lttpID) AS popularity FROM tags, linkingsTagToPost WHERE tagID=lttpTagLID GROUP BY tag "+( resultsOrderingType == 1 ? ' ORDER BY tag ASC' : ' ORDER BY popularity DESC' )+" LIMIT ?", sqlLimit, (e,r,f) => {
+        if ( typeof req.body.search_by != 'undefined' ) {
+          sqlSearchBy = req.body.search_by;
+        } 
+        const sqlValues = [];
+        if ( sqlSearchBy != '' ) {
+          sqlValues.push(sqlSearchBy.replace("'","\'").replace(";",""));
+        }
+        sqlValues.push(sqlLimit);
+        db.query("SELECT tag, COUNT(lttpID) AS popularity FROM tags, linkingsTagToPost WHERE tagID=lttpTagLID" + (sqlSearchBy == '' ? '' : " AND tag LIKE '%"+sqlSearchBy+"%' ") + " GROUP BY tag "+( resultsOrderingType == 1 ? ' ORDER BY tag ASC' : ' ORDER BY popularity DESC' )+" LIMIT ?", sqlLimit, (e,r,f) => {
           if ( e == null) {
             if ( r.length > 0 ) {
               const arrayOfTags = [];
@@ -50,6 +58,7 @@ router.post('/', (req,res,next) => {
               res.status(200).json( { success: true, tags: [] } );  
             }
           }else{
+            console.log(e);
             res.status(200).json( { success: false, value: 'Database query failed.' } );  
           }
         });  
