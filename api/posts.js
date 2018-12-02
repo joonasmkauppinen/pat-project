@@ -33,9 +33,23 @@ const upload = multer({dest: './public/img/'});
 router.post('/', (req,res,next) => {
   auth(req).then( (r) => {
     
-    let filtering = 'landing';
+    let filteringMethod = 'landing';
     if ( r.session ) {
       // enable other filtering methods here...
+      if ( typeof req.body.filter_by != 'undefined' ) {
+        switch ( req.body.filter_by.toLowerCase() ) {
+          case 'home':
+            break;
+          case 'tag':
+            break;
+          case 'tagsearch':
+            break;
+          case 'tagsearch':
+            break;
+          default:
+            res.status(400).json( { success:false, error: 'Unsupported filtering type provided: ' + req.body.filter_by } );
+        }
+      }
     }
 
     let response = { success : 1 }
