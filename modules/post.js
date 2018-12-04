@@ -17,7 +17,7 @@ return new Promise((resolve, reject) => {
         // Deletion is allowed if permission POST_DELETE or original uploader tries to delete own post.
         if ( POST_DELETE || r[0].postAddedBy == auth.user_id ) {
           tag.removeAllTagsFromPost(postID).then((removeTagsSuccess) => {
-            if ( removeTagsSuccess == true ) {
+            if ( removeTagsSuccess ) {
               comment.removeAllCommentsForPost(postID).then((removeCommentsSuccess) => {
                 if ( removeCommentsSuccess ) {
                   contentreport.removeAllContentReportsForPost(postID).then((removeCRSuccess) => {
@@ -32,31 +32,17 @@ return new Promise((resolve, reject) => {
                                   resolve('Error processing DELETE request (actual post item deletion failed).');
                                 }
                             });            
-                        }else{
-                          resolve('Error processing DELETE request (pet linkings deletion failed).');
-                        }
+                        }else{ resolve('Error processing DELETE request (pet linkings deletion failed).'); }
                       });
-                    }else{
-                      resolve('Error processing DELETE request (content reports deletion failed).');
-                    }
+                    }else{ resolve('Error processing DELETE request (content reports deletion failed).'); }
                   });
-                }else{
-                  resolve('Error processing DELETE request (comments deletion failed).');
-                }
+                }else{ resolve('Error processing DELETE request (comments deletion failed).'); }
                 });
-              }else{
-                resolve('Error processing DELETE request (tag deletion failed).');                    
-              }
+              }else{ resolve('Error processing DELETE request (tag deletion failed).'); }
             });
-          }else{
-            resolve('Unauthorized request.');
-          }
-        }else{
-          resolve('Post not found.');
-        }
-      }else{
-        resolve('Database query failed.');
-      }
+          }else{ resolve('Unauthorized request.'); }
+        }else{ resolve('Post not found.'); }
+      }else{ resolve('Database query failed.'); }
   });
 });
 };

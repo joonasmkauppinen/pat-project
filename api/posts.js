@@ -263,7 +263,7 @@ router.post('/upload', (req,res,next) => {
       req.tags = [];
       if ( tg.length > 0 ) {
         for(let i=0;i<tg.length;i++){
-          if ( tag.isAcceptableTag(tg[i]) ) {
+          if ( tag.isAcceptableTag( tg[i]) ) {
             req.tags.push(tg[i]);
           }
         }
