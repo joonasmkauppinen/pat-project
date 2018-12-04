@@ -3,10 +3,10 @@ const router = express.Router();
 const db = require('../modules/db');
 const auth = require('../modules/auth');
 const formatTime = require('../modules/time-formatting');
-const tag = require('../modules/tag');
 const global = require('../modules/global');
 const post = require('../modules/post');
 const comment = require('../modules/comment');
+const tag = require('../modules/tag');
 const createthumbnail = require('../modules/createthumbnail');
 const jimp = require('jimp');
 const md5 = require('md5');
@@ -103,20 +103,38 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-  db.query("SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName, users.userID FROM posts, users WHERE postAddedBy=users.userID AND ("+queryWhereParams+")", (e,r,f) => {
+
+  db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName, users.userID, GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
+            FROM posts
+            LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
+            LEFT JOIN tags ON linkingsTagToPost.lttpTagLID=tagID
+            LEFT JOIN users ON posts.postAddedBy=users.userID
+            WHERE postAddedBy=users.userID AND (`+queryWhereParams+`)
+            GROUP BY postID`,
+  (e,r,f) => {
     if ( e == null) {
       response.posts_count  = r.length;
       response.post_data = {}
-      r.forEach((i) => {
-        const dataItem = { added : formatTime.unixTimeAsDate(i.postAddTime) , added_ago : formatTime.timeAgo(i.postAddTime), addedby_user : i.userName
-          , url : 'img/' + i.postID + '_' + i.postMediaURI, media_type : i.postMediaType, mime: i.postMimeType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
-          , tags : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'], my_rate: ''
-          , comments : 5
-          , latest_comment : { sender : 'samuli_v', added_ago: '999 mins ago', comment: 'bla bla bla this is a big bla bla bla and you may consider shortening this in frontend, right? bla bla bla bla bla long enough? bla bla bla bla' } }
-        response.post_data[i.postID] = ( dataItem );
+      r.forEach( (i) => {
+          const dataItem = { 
+                added : formatTime.unixTimeAsDate(i.postAddTime), 
+                added_ago : formatTime.timeAgo(i.postAddTime), 
+                addedby_user : i.userName, 
+                url : 'img/' + i.postID + '_' + i.postMediaURI, 
+                media_type : i.postMediaType, 
+                mime: i.postMimeType, 
+                post : i.post, 
+                user_pic : 'img/usr/' + i.userID + '.png',
+                tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
+                pets : ['DemoPet1', 'Pet2'],
+                my_rate: '',
+                comments : 5 }
+          response.post_data[i.postID] = ( dataItem );
+      
       });
       response.success = true;
     }else{
+      console.log(e);
       response.error = 'Database query failed.';
     }
     res.status(200).json((response));
@@ -275,9 +293,6 @@ router.post('/upload', (req,res,next) => {
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
     auth(req).then((r) => {
-      console.log('authing');
-      console.log(req.body);
-      //console.log(r);
       if ( r.session ) {
         const mediaURI = md5( formatTime.systemTimestamp() + req.file.path ) + '.' + req.file_extension;
         req.mediaURI = mediaURI;

@@ -6,6 +6,30 @@ const pet = require('../modules/pet');
 const comment = require('../modules/comment');
 const contentreport = require('../modules/contentreport');
 
+/* Deletes all the files related to one post */
+const deleteAllStoredPostFiles = (postID) => {
+  return true;
+}
+
+/* Deletes all the linkings to one post (tags, comments, content reports and pet linkings) */
+const deleteAllPostLinkings = (postID) => {
+return new Promise((resolve, reject) => {
+  tag.removeAllTagsFromPost(postID).then((removeTagsSuccess) => {
+    comment.removeAllCommentsForPost(postID).then((removeCommentsSuccess) => {
+      contentreport.removeAllContentReportsForPost(postID).then((removeCRSuccess) => {
+        pet.removePetLinkingsForPost(postID).then((removePetSuccess) => {
+          if ( removePetSuccess && removeCRSuccess && removeCommentsSuccess && removeTagsSuccess ) {
+            resolve(true);
+          }else{
+            resolve(false);
+          }
+        });
+      });
+    });
+  });
+});  
+};
+
 
 const deletePost = (postID, auth) => {
 return new Promise((resolve, reject) => {
@@ -16,30 +40,17 @@ return new Promise((resolve, reject) => {
       if ( r.length == 1 ) {
         // Deletion is allowed if permission POST_DELETE or original uploader tries to delete own post.
         if ( POST_DELETE || r[0].postAddedBy == auth.user_id ) {
-          tag.removeAllTagsFromPost(postID).then((removeTagsSuccess) => {
-            if ( removeTagsSuccess ) {
-              comment.removeAllCommentsForPost(postID).then((removeCommentsSuccess) => {
-                if ( removeCommentsSuccess ) {
-                  contentreport.removeAllContentReportsForPost(postID).then((removeCRSuccess) => {
-                    if ( removeCRSuccess ) {
-                      pet.removePetLinkingsForPost(postID).then((removePetSuccess) => {
-                        if ( removePetSuccess ) {
-                            db.query("DELETE FROM posts WHERE postID=? LIMIT 1", postID, (e,r,f) => {
-                                if ( e == null ) {
-                                  // *** TODO: DELETE ALSO THE FILES HERE !!! *****************************************************************************
-                                  resolve('success');
-                                }else{
-                                  resolve('Error processing DELETE request (actual post item deletion failed).');
-                                }
-                            });            
-                        }else{ resolve('Error processing DELETE request (pet linkings deletion failed).'); }
-                      });
-                    }else{ resolve('Error processing DELETE request (content reports deletion failed).'); }
-                  });
-                }else{ resolve('Error processing DELETE request (comments deletion failed).'); }
-                });
-              }else{ resolve('Error processing DELETE request (tag deletion failed).'); }
-            });
+          deleteAllPostLinkings(postID).then((deleteSuccess) => {
+            if ( deleteSuccess ) {
+              db.query("DELETE FROM posts WHERE postID=? LIMIT 1", postID, (e,r,f) => {
+                if ( e == null ) {
+                  // Delete files to this post
+                  deleteAllStoredPostFiles(postID);                  
+                  resolve('success');
+                }else{ resolve('Error processing DELETE request (actual post item deletion failed).'); }
+              });    
+            }else{ resolve('Post Linkings deletion failed.'); }
+          });
           }else{ resolve('Unauthorized request.'); }
         }else{ resolve('Post not found.'); }
       }else{ resolve('Database query failed.'); }

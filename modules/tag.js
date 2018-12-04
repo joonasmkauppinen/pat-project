@@ -7,18 +7,12 @@ const removeDuplicatesFromArray = (array) => {
 };
 
 const parseTagName = (tag) => {
-    console.log('Parse TagName:')
-    console.log(tag);
     return tag.toLowerCase();
 };
 
 const parseTagArrayNames = (tagsArray) => {
-    console.log('PARSE');
-    console.log(tagsArray);
     const newArray = [];
     for(let i=0;i<tagsArray.length;i++){
-        console.log('TAGSARRAY');
-        console.log(tagsArray[i]);
         newArray.push(parseTagName(tagsArray[i]));
     }
     return newArray;
@@ -33,6 +27,27 @@ const constructTagWhereSelector = (tagsArray) => {
     }
     return `(${outputString}) `;
 };
+
+/* Get String Array of Tags by Post ID */
+const getTagsFromPost = (postID) => {
+    return new Promise((resolve, reject) => {
+        db.query('SELECT tag FROM linkingsTagToPost WHERE lttpPostLID=? ORDER BY tag ASC', postID, (error,response,f) => {
+            if ( error ) {
+                resolve( [] );
+            }else{
+                if ( reponse.length > 0 ) {
+                    const responseArray = [];
+                    for (let i=0; i<response.length; i++) {
+                        responseArray.push(response[i].tag);
+                    }
+                    resolve ( responseArray );
+                }else{
+                    resolve( [] );
+                }
+            }
+        });
+    });
+}
 
 /* Test is String or String[] array of tags are acceptable  */
 const isAcceptableTag = (tag) => {
@@ -51,6 +66,7 @@ const isAcceptableTag = (tag) => {
     }
 };
 
+/* Find tag ID's from the database. If tag does not exists, it will be created and added to the DB.  */
 const findTagsIDs = (tags) => {
     return new Promise((resolve, reject) => {
         const whereSelector = constructTagWhereSelector(tags);
@@ -58,8 +74,8 @@ const findTagsIDs = (tags) => {
             if ( e == null ) {
                 const tagsByKey = [];
                 const justKeys = [];
-                for (let i=0;i<tags.length;i++) { tagsByKey[parseTagName(tags[i])] = 0;}   
-                for (let i=0;i<r.length;i++) { tagsByKey[parseTagName(r[i].tag)] = r[i].tagID; }
+                for (let i=0; i<tags.length; i++) { tagsByKey[parseTagName(tags[i])] = 0;}   
+                for (let i=0; i<r.length; i++) { tagsByKey[parseTagName(r[i].tag)] = r[i].tagID; }
                 const insertNewTags = [];
                 for (let i in tagsByKey) { if ( tagsByKey[i] == 0 ) insertNewTags.push(i); }
                 if ( insertNewTags.length != 0 ) {
@@ -69,7 +85,7 @@ const findTagsIDs = (tags) => {
                     }
                     db.query("INSERT INTO `tags` (tag) VALUES " +newTagsSQLValues, insertNewTags, (e,r,f) => {
                         if ( e == null ) {
-                            for (let i=0;i<insertNewTags.length;i++) { tagsByKey[insertNewTags[i]] = r.insertId + i; }
+                            for (let i=0; i<insertNewTags.length; i++) { tagsByKey[insertNewTags[i]] = r.insertId + i; }
                             for (let i in tagsByKey) { justKeys.push(tagsByKey[i]); }
                             resolve( justKeys );
                         }else{
@@ -95,7 +111,7 @@ const addTagsToPost = (tagsArray, postID) => {
                 db.query("SELECT lttpTagLID FROM `linkingsTagToPost` WHERE lttpPostLID=?", postID, (e,r,f) => {
                     if ( e == null ) {
                         if ( r.length > 0 ) {
-                            for(let i=0;i<r.length;i++){
+                            for(let i=0; i<r.length; i++){
                                 addTags.pop(r[i]);
                             }
                         }
@@ -108,18 +124,11 @@ const addTagsToPost = (tagsArray, postID) => {
                                 if ( e == null ) {
                                     resolve( true );
                                 }else{
-                                    console.log('addTagsToPost: SQL Clause failed!');
-                                    console.log(e);
                                     resolve( false );
                                 }
-                            });    
-                        }else{
-                            resolve ( true );
-                        }
-
-                    }else{
-                        resolve( false );
-                    }                    
+                            });
+                        }else{ resolve ( true ); }
+                    }else{ resolve( false ); }
                 });
             }
         });
@@ -139,4 +148,4 @@ const removeAllTagsFromPost = (postID) => {
     });
 };
 
-module.exports = { addTagsToPost, removeAllTagsFromPost, isAcceptableTag };
+module.exports = { addTagsToPost, removeAllTagsFromPost, isAcceptableTag, getTagsFromPost };
