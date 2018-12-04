@@ -27,7 +27,7 @@ const getSession = async ( id, token ) => {
 const isSessionCookiesSet = (request) => {
   if ( typeof request.body.session_id == 'undefined' || typeof request.body.session_token == 'undefined' 
        || request.body.session_id == '' || request.body.session_token == ''
-       || isNaN(parseFloat(request.body.session_id)) && isFinite(request.body.session_id) 
+       || !(!isNaN(parseFloat(request.body.session_id)) && isFinite(request.body.session_id))
        || request.body.session_token.length != 64 ) {
     return false;
   }else{

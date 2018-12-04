@@ -4,6 +4,12 @@ const db = require('../modules/db');
 const auth = require('../modules/auth');
 const formatTime = require('../modules/time-formatting');
 const tag = require('../modules/tag');
+const global = require('../modules/global');
+const post = require('../modules/post');
+const comment = require('../modules/comment');
+const createthumbnail = require('../modules/createthumbnail');
+const jimp = require('jimp');
+const md5 = require('md5');
 
 const fs = require('fs');
 const multer = require('multer');
@@ -103,7 +109,7 @@ router.post('/getcontent', (req,res,next) => {
       response.post_data = {}
       r.forEach((i) => {
         const dataItem = { added : formatTime.unixTimeAsDate(i.postAddTime) , added_ago : formatTime.timeAgo(i.postAddTime), addedby_user : i.userName
-          , url : 'img/' + i.postMediaURI, media_type : i.postMediaType, mime: i.postMimeType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
+          , url : 'img/' + i.postID + '_' + i.postMediaURI, media_type : i.postMediaType, mime: i.postMimeType, post : i.post, user_pic : 'img/usr/' + i.userID + '.png'
           , tags : ['Demo', 'Please', 'DoThis'], 'pets' : ['DemoPet1', 'Pet2'], my_rate: ''
           , comments : 5
           , latest_comment : { sender : 'samuli_v', added_ago: '999 mins ago', comment: 'bla bla bla this is a big bla bla bla and you may consider shortening this in frontend, right? bla bla bla bla bla long enough? bla bla bla bla' } }
@@ -118,7 +124,7 @@ router.post('/getcontent', (req,res,next) => {
 });
 
 /**
- * @api {delete} /posts/delete Delete post by Post ID #_IN_PROGRESS_#
+ * @api {delete} /delete Delete Post by ID
  * @apiName delete
  * @apiVersion 1.0.0
  * @apiGroup Posts
@@ -134,9 +140,27 @@ router.post('/getcontent', (req,res,next) => {
  * 
  * @apiPermission POST_DELETE, (or owner of the post)
  */
-router.delete('/posts/delete', (req,res,next) => {
-  res.status(200).json( {do: 'this'} );
+router.delete('/:postID', (req,res,next) => {
+  if (global.issetIsNumeric(req.params.postID)) {
+    const postID = parseInt(req.params.postID);
+    auth(req).then( (auth_response) => {
+      if ( auth_response.session ) {
+          post.deletePost(postID, auth_response).then((deletePostResponse) => {
+            if ( deletePostResponse == 'success' ) {
+              res.status(200).json( { success: true } );
+            }else{
+              res.status(400).json( { success: false, error: deletePostResponse } );
+            }
+          });        
+      }else{
+        res.status(400).json( { success: false, error: 'You are not logged in. If not trying to delete own post, delete requires permission POST_DELETE' } );
+      }
+      });
+  }else{
+    res.status(400).json( { success: false, error: 'ID is not defined.' } );
+  }
 });
+
 
 /**
  * @api {post} /posts/upload Upload new Post #_IN_PROGRESS_#
@@ -159,94 +183,166 @@ router.delete('/posts/delete', (req,res,next) => {
  * @apiPermission POST_UPLOAD
  */
 router.post('/upload', upload.single('upload_file'), (req,res,next) => {
-  //console.log(req.file);
-  //req.file originalname, mimetype, filename, path
+  req.upload_error = false;
+  req.upload_error_description = '';
+  // First step : Upload the File to the Server
 
+  // Define Supported Mime Types for Uploads:
   const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 
   'video/x-m4v', 'video/mpeg', 'video/mp4', 'video/ogg', 'video/webm', 'video/quicktime'];
-  // 'audio/x-aac', 'audio/midi', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/x-wav'
+  
+  /* Preferred audio types if we want to use AUDIO uploading: 'audio/x-aac', 'audio/midi', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/x-wav' */
+
+  // Check, is the MimeType supported, otherwise throw an error
   if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
-    const dotted = req.file.originalname.split('.');
-    if ( dotted != null && dotted.length >= 0 ) {
-      const extension = dotted[dotted.length-1];
-      req.mimetype = req.file.mimetype;
-      req.mediatype = req.file.mimetype.substring(0,1);
-      next();
-    }else{
-      res.status(200).json( {success:false, error: 'Other error'} );
-    }
-    
+    // Export file extension from FileName
+    const fileExtension = req.file.originalname.split('.').pop();
+    req.file_extension = fileExtension;
+    req.mimetype = req.file.mimetype;
+    req.mediatype = req.file.mimetype.substring(0,1); // Mediatype: i = image, v = video
   }else{
-    res.status(200).json( {success:false, error: 'File Type not supported.'} );
-  }  
+    req.upload_error = true;
+    req.upload_error_description = 'The File MimeType of the Uploaded File is not supported.';
+  }
+next();
 });
-router.post('/upload',(req,res,next) => {
-  let postDescription = '';
-  if ( typeof req.body.description != 'undefined' ) {
-    postDescription = req.body.description;
-    if ( postDescription.length > process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH ){
-        res.status(200).json( {success:false, error: 'Description is too long. Maximum length allowed is ' + process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH + ' characters.'} );
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    let postDescription = '';
+    if ( typeof req.body.description != 'undefined' ) {
+      postDescription = req.body.description;
+      if ( postDescription.length > process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH ) {
+          req.upload_error = true;
+          req.upload_error_description = 'Description is too long. Maximum length allowed is ' + process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH + ' characters.';
       }else{
         req.description = postDescription;
-        next();
       }
     }else{
       req.description = '';
-      next();
     }
+  }
+next();
 });
 router.post('/upload', (req,res,next) => {
-  if ( typeof req.body.tags != 'tags' ) {
-    const tg = req.body.tags.split(' ');
-    req.tags = [];
-    if ( tg.length > 0 ) {
-      for(let i=0;i<tg.length;i++){
-        if ( tag.isAcceptableTag(tg[i]) ) {
-          req.tags.push(tg[i]);
+  if ( !req.upload_error ) {
+    createthumbnail.createThumb(req.file.path, 2000, './public/img/' + req.file.filename + '_orig', next);
+  }
+});
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    createthumbnail.createThumb(req.file.path, 300, './public/img/thumb/' + req.file.filename, next);
+  }
+});
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    createthumbnail.createOnePixel(req.file.path, './public/img/1px/' + req.file.filename + '.' + req.file_extension, next);
+  }
+});
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    jimp.read( './public/img/1px/' + req.file.filename + '.' + req.file_extension, (err, image) => {
+      if ( !err ) {
+        const pixelColour = parseInt(image.getPixelColor(0,0));
+        req.hexColour = (pixelColour.toString(16).substring(0,6));
+        console.log('=)')
+        console.log(req.hexColour)
+        // Remove temporary 1x1 image file for colour
+        fs.unlinkSync('./public/img/1px/' + req.file.filename + '.' + req.file_extension);
+        next();
+      }else{
+        req.hexColour = '';
+        next();
+      }
+    });
+  }
+});
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    if ( typeof req.body.tags != 'tags' ) {
+      const tg = req.body.tags.split(' ');
+      req.tags = [];
+      if ( tg.length > 0 ) {
+        for(let i=0;i<tg.length;i++){
+          if ( tag.isAcceptableTag(tg[i]) ) {
+            req.tags.push(tg[i]);
+          }
         }
       }
     }
   }
   next();
 });
-router.post('/upload',(req,res,next) => {
-  auth(req).then((r) => {
-    console.log('authing');
-    console.log(req.body);
-    //console.log(r);
-    if ( r.session ) {
-      db.query("INSERT INTO `posts` (postAddTime, postAddedBy, postMediaType, postMimeType, postMediaURI, postColor, post) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-               [formatTime.systemTimestamp(), r.user_id, req.mediatype, req.mimetype, 'uri', 'face00', req.description]
-               , (e,r,f) => {
-        if ( e == null ) {
-            // Add tags to the post
-            if ( req.tags.length > 0 ) {
-              console.log(req.tags);
-              tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
-                if ( r == true ) {
-                  res.status(200).json( { success:true } );
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    auth(req).then((r) => {
+      console.log('authing');
+      console.log(req.body);
+      //console.log(r);
+      if ( r.session ) {
+        const mediaURI = md5( formatTime.systemTimestamp() + req.file.path ) + '.' + req.file_extension;
+        req.mediaURI = mediaURI;
+        db.query("INSERT INTO `posts` (postAddTime, postAddedBy, postMediaType, postMimeType, postMediaURI, postColor, post) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                [formatTime.systemTimestamp(), r.user_id, req.mediatype, req.mimetype, mediaURI, req.hexColour, req.description]
+                , (e,r,f) => {
+          if ( e == null ) {
+              req.addID = r.insertId;
+              // Add tags to the post
+              if ( req.tags.length > 0 ) {
+                console.log(req.tags);
+                tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
+                  if ( r == true ) {
+                    // SUCCESS !
+                    next();
+                  }else{
+                    // WARNING, ERROR WHILE ADDING TAGS!
+                    next();
+                  }
+                });
                 }else{
-                  res.status(200).json( { success:true, warning: 'error when adding tags' } );
+                  // SUCCESS !
+                  next();
                 }
-              });
-              }else{
-                res.status(200).json( { success:true } );
-              }
-          }else{
-            res.status(200).json( { success:false, error: 'Database query error.' } );
-          }
-      });      
-    }else{
-      res.status(200).json( {success:false, error: 'You are not logged in.'} );
-    }
-  });
+            }else{
+              console.log('ERROR.');
+              console.log(e);
+              req.upload_error = true;
+              req.upload_error_description = 'Database query error.';
+              next();
+            }
+        });      
+      }else{
+        req.upload_error = true;
+        req.upload_error_description = 'You are not logged in.';
+        next();
+      }
+    });
+  }
 });
-
+router.post('/upload', (req,res,next) => {
+  if ( !req.upload_error ) {
+    console.log('ADDID: ' + req.addID);
+    fs.rename('./public/img/' + req.file.filename + '_orig', './public/img/' + req.addID + '_' + req.mediaURI, (e) => {
+      fs.rename('./public/img/thumb/' + req.file.filename, './public/img/thumb/' + req.addID + '_' + req.mediaURI, (e) => {
+        //fs.unlinkSync('./public/img/' + req.file.filename);
+      });
+    });
+  }else{
+    console.log('errors');
+  }
+  next();
+});
+router.post('/upload', (req,res,next) => {
+  // handle final response to the user
+  if ( req.upload_error ) {
+    res.status(400).json( { success: false, error: req.upload_error_description } );
+  }else{
+    res.status(200).json( { success: true } );
+  }
+});
 router.post('/', (req,res,next) => {
   res.status(200).json({
     message: 'Handling POST requests to /users'
   });
 });
-
 
 module.exports = router;
