@@ -3,16 +3,17 @@ const router = express.Router();
 const db = require('../modules/db');
 const auth = require('../modules/auth');
 const tf = require('../modules/time-formatting');
+const global = require('../modules/global');
 
 /**
- * @api {post} /:postID Get Comments by Post ID
+ * @api {post} /comments/ Get Comments by Post ID
  * @apiName comments
  * @apiVersion 1.0.0
  * @apiGroup Comments
  *
- * @apiParam {Integer} [session_id] Session ID
- * @apiParam {String} [session_token] Session Token
- * @apiParam {Integer} [post_id] Post ID
+ * @apiParam {Integer} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Integer} post_id Post ID
  * 
  * @apiPermission LOGGED_IN
  * 
@@ -22,7 +23,14 @@ const tf = require('../modules/time-formatting');
  * @apiError {Boolean} success (false) API Call failed
  * @apiError {String} error Error description
  */
-router.post('/:commentID', (req,res,next) => {
+router.post('/', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.post_id ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter post_id is required and it must be a number.' } );
+  }
+});
+router.post('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
       next();
@@ -31,13 +39,13 @@ router.post('/:commentID', (req,res,next) => {
     }
   });
 });
-router.post('/:commentID', (req,res,next) => {
+router.post('/', (req,res,next) => {
   // 
   db.query(`SELECT commentID, commentAddTime, comment, userName
             FROM comments, users
             WHERE commentPostLID=? AND users.userID=commentUserLID
             ORDER BY commentAddTime DESC`, 
-  [req.params.commentID] ,(e,r,f) => {
+  [req.body.post_id] ,(e,r,f) => {
     if ( e ) {
       res.status(400).json( { success: false, error: 'Database query failed.' } );
     }else{

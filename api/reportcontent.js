@@ -7,7 +7,7 @@ const post = require('../modules/post');
 const report = require('../modules/report');
 
 /**
- * @api {post} /:postID Report Post by ID
+ * @api {post} /reportcontent/ Report Post by ID
  * @apiName reportbypostid
  * @apiVersion 1.0.0
  * @apiGroup ReportContent
@@ -70,7 +70,7 @@ router.post('/', (req,res,next) => {
   });  
 
 /**
- * @api {get} /types Get Content Report Types
+ * @api {get} /reportcontent/types Get Content Report Types #_INPROGRESS_#
  * @apiName types
  * @apiVersion 1.0.0
  * @apiGroup ReportContent

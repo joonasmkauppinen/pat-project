@@ -142,7 +142,7 @@ router.post('/getcontent', (req,res,next) => {
 });
 
 /**
- * @api {delete} /delete Delete Post by ID
+ * @api {delete} /posts/delete Delete Post by ID
  * @apiName delete
  * @apiVersion 1.0.0
  * @apiGroup Posts
