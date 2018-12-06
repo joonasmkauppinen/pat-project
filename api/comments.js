@@ -5,6 +5,7 @@ const auth = require('../modules/auth');
 const tf = require('../modules/time-formatting');
 const global = require('../modules/global');
 const post = require('../modules/post');
+const comment = require('../modules/comment');
 
 /**
  * @api {post} /comments/ Get Comments by Post ID
@@ -126,4 +127,71 @@ router.post('/add', (req,res,next) => {
     }
   });
 });
+
+/**
+ * @api {delete} /comments Delete Comment
+ * @apiName comments/delete
+ * @apiVersion 1.0.0
+ * @apiGroup Comments
+ *
+ * @apiParam {Integer} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Integer} comment_id Post ID
+ * 
+ * @apiPermission COMMENT_DELETE or logged in user deleting own comment
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded
+ * 
+ * @apiError {Boolean} success (false) API Call failed
+ * @apiError {String} error Error description
+ */
+router.delete('/', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.comment_id ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter comment_id is required and it must be a number.' } );
+  }
+});
+router.delete('/', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      req.user_id = r.user_id;
+      if ( r.permissions.indexOf('COMMENT_DELETE') ) {
+        req.COMMENT_DELETE = 1;
+      }else{
+        req.COMMENT_DELETE = 0;
+      }
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.delete('/', (req,res,next) => {
+  comment.getComment(req.body.comment_id).then( (comment) => {
+    if ( comment ) {
+      req.comment = comment;
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Comment not found by ID' } );
+    }
+  });
+});
+router.delete('/', (req,res,next) => {
+  if ( req.COMMENT_DELETE || req.user_id == req.comment.commentUserLID ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Unauthorized request. You can only delete own comments.' } );
+  }
+});
+router.delete('/', (req,res,next) => {
+  comment.deleteComment(req.body.comment_id).then((deleteCommentSuccess) => {
+    if ( deleteCommentSuccess ) {
+      res.status(200).json( { success: true } );
+    }else{
+      res.status(400).json( { success: false, error: 'Trying to delete, but database query failed.' } );
+    }
+  });
+});
+
 module.exports = router;
