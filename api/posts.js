@@ -115,8 +115,13 @@ router.post('/getcontent', (req,res,next) => {
     if ( req.auth ) {
       queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
     }
+
   db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
             postMediaType, users.userName, users.userID, rating, 
+            (SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID) AS commentCount,
+            ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
+              FROM linkingsPetToPost, pets
+              WHERE lptpPostLID=postID AND pets.petID=linkingsPetToPost.lptpPetLID) AS pets,
             GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
             FROM posts
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
@@ -142,9 +147,9 @@ router.post('/getcontent', (req,res,next) => {
                 color : i.postColor,
                 user_pic : 'img/usr/' + i.userID + '.png',
                 tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
-                pets : ['DemoPet1', 'Pet2'],
+                pets : ( i.pets == null || i.pets == '' ? [] : i.pets.split( '|' ) ),
                 my_rate: ( i.rating ? i.rating : 0),
-                comments : 5 }
+                comments : i.commentCount }
           response.post_data[i.postID] = ( dataItem );      
       });
       response.success = true;
