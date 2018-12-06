@@ -4,6 +4,7 @@ const db = require('../modules/db');
 const auth = require('../modules/auth');
 const tf = require('../modules/time-formatting');
 const global = require('../modules/global');
+const post = require('../modules/post');
 
 /**
  * @api {post} /comments/ Get Comments by Post ID
@@ -63,4 +64,66 @@ router.post('/', (req,res,next) => {
   });
 });
 
+/**
+ * @api {post} /comments/add Add Comment
+ * @apiName comments/add
+ * @apiVersion 1.0.0
+ * @apiGroup Comments
+ *
+ * @apiParam {Integer} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Integer} post_id Post ID
+ * @apiParam {Integer} comment Comment
+ * 
+ * @apiPermission LOGGED_IN
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded
+ * 
+ * @apiError {Boolean} success (false) API Call failed
+ * @apiError {String} error Error description
+ */
+router.post('/add', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.post_id ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter post_id is required and it must be a number.' } );
+  }
+});
+router.post('/add', (req,res,next) => {
+  if ( global.issetVar ( req.body.comment ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter comment is required.' } );
+  }
+});
+router.post('/add', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      req.user_id = r.user_id;
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.post('/add', (req,res,next) => {
+  post.postExists(req.body.post_id).then( (postExists) => {
+    if ( postExists ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Post does not exists.' } );
+    }
+  });
+});
+router.post('/add', (req,res,next) => {
+  db.query(`INSERT INTO comments (commentPostLID, commentUserLID, commentAddTime, comment) VALUES (?, ?, ?, ?)`, 
+  [req.body.post_id, req.user_id, tf.systemTimestamp(), req.body.comment] ,(e,r,f) => {
+    if ( !e ) {
+      res.status(200).json( { success: true } );
+    }else{
+      console.log(e);
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
+    }
+  });
+});
 module.exports = router;
