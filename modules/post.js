@@ -9,6 +9,7 @@ const contentreport = require('../modules/contentreport');
 /* Deletes all the files related to one post */
 const deleteAllStoredPostFiles = (postID) => {
   // TODO
+  console.log('*** DELETE ALL STORED POST FILES for post ID=' + postID);
   return true;
 }
 
@@ -76,4 +77,4 @@ return new Promise((resolve, reject) => {
 });
 };
 
-module.exports = { deletePost, postExists };
+module.exports = { deletePost, postExists, deleteAllStoredPostFiles };

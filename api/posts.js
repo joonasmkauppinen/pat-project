@@ -103,8 +103,7 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-
-  db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postMediaType, users.userName, users.userID, GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
+  db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, postMediaType, users.userName, users.userID, GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
             FROM posts
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
             LEFT JOIN tags ON linkingsTagToPost.lttpTagLID=tagID
@@ -124,13 +123,13 @@ router.post('/getcontent', (req,res,next) => {
                 media_type : i.postMediaType, 
                 mime: i.postMimeType, 
                 post : i.post, 
+                color : i.postColor,
                 user_pic : 'img/usr/' + i.userID + '.png',
                 tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
                 pets : ['DemoPet1', 'Pet2'],
                 my_rate: '',
                 comments : 5 }
-          response.post_data[i.postID] = ( dataItem );
-      
+          response.post_data[i.postID] = ( dataItem );      
       });
       response.success = true;
     }else{

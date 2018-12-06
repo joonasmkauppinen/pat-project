@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../modules/db');
+const global = require('../modules/global');
+const auth = require('../modules/auth');
 const md7 = require('../modules/md7');
+const user = require('../modules/user');
+const post = require('../modules/post');
+
 
 router.get('/', (req,res,next) => {
   let response = { success : 0 }
@@ -205,23 +210,150 @@ router.post('/create-user-account', (req,res,next) => {
     }
   });
 
-router.get('/:userID', (req,res,next) => {
-  const id = req.params.userID;
-  if ( id === '' ) {
-    res.status(500).json({
-      message: 'ID is not specified'
-    });
+/**
+ * @api {delete} /users Delete User #_IN_PROGRESS_#
+ * @apiName users/delete
+ * @apiVersion 1.0.0
+ * @apiGroup Users
+ *
+ * @apiParam {Integer} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Integer} user_id Usr ID
+ * 
+ * @apiPermission USER_DELETE or logged in user can delete own account
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded
+ * 
+ * @apiError {Boolean} success (false) API Call failed
+ * @apiError {String} error Error description
+ */
+router.delete('/', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.user_id ) ) {
+    req.body.user_id = parseInt(req.body.user_id);
+    next();
   }else{
-    res.status(200).json({
-      message: 'User ID Data from user' + id
-    });
+    res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
   }
 });
-
-router.post('/', (req,res,next) => {
-  res.status(200).json({
-    message: 'Handling POST requests to /users'
+router.delete('/', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      req.user_id = r.user_id;
+      if ( r.permissions.indexOf('USER_DELETE') ) {
+        req.USER_DELETE = 1;
+      }else{
+        req.USER_DELETE = 0;
+      }
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
   });
 });
-
+router.delete('/', (req,res,next) => {
+  if ( req.body.user_id != req.user_id ) {
+    user.getUser(req.body.user_id).then( (usr) => {
+      if ( usr ) {
+        next();
+      }else{
+        res.status(400).json( { success: false, error: 'User not found.' } );
+      }
+    });    
+  }else{
+    next();
+  }
+});
+router.delete('/', (req,res,next) => {
+  if ( req.body.user_id == req.user_id ) {
+    // User is deleting its own account.
+    next();
+  }else{
+    // User tries to delete other users account
+    if ( req.USER_DELETE ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Unauthorized! You do not have permission to delete other users!' } );
+    }
+  }
+});
+router.delete('/', (req,res,next) => {
+  user.getAllPostIDsByUser(req.body.user_id).then( (delUserPosts) => {
+    req.user_posts = delUserPosts;
+    next();
+  });  
+});
+router.delete('/', (req,res,next) => {
+  user.getAllPetIDsByUser(req.body.user_id).then( (delUserPets) => {
+    req.user_pets = delUserPets;
+    next();
+  });  
+});
+router.delete('/', (req,res,next) => {
+  if ( req.user_posts ) {
+    let queryWhereParams = '';
+    for ( let i=0; i<req.user_posts.length; i++ ){
+      queryWhereParams += (i==0?'':' OR ')+'p='+req.user_posts[i].id;
+      post.deleteAllStoredPostFiles(req.user_posts[i].id);
+    }
+    req.queryWhereParamsForPost = queryWhereParams;
+  }
+  next();
+});
+router.delete('/', (req,res,next) => {
+  if ( req.user_pets ) {
+    let queryWhereParams = '';
+    for ( let i=0; i<req.user_pets.length; i++ ){
+      queryWhereParams += (i==0?'':' OR ')+'p='+req.user_pets[i];
+    }
+    req.queryWhereParamsForPet = queryWhereParams;
+  }
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM comments WHERE commentUserLID=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM linkingsFollowingUser WHERE lfuFollowerUserLID=? OR lfuFollowingUserLID=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM contentReports WHERE crReportedBy=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  if ( req.user_pets ) {
+    console.log(`DELETE FROM linkingsPetToPost WHERE ${(req.queryWhereParamsForPet).replace(/p/g,'lptpPetLID')}`);
+  }
+  next();
+});
+router.delete('/', (req,res,next) => {
+  if ( req.user_posts ) {
+    console.log(`DELETE FROM linkingsTagToPost WHERE ${(req.queryWhereParamsForPost).replace(/p/g,'lttpPostLID')}`);
+    }
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM pets WHERE petOwnerLID=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM posts WHERE postAddedBy=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM sessions WHERE sessionUserLID=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM ratings WHERE ratingByUserLID=?`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  console.log(`DELETE FROM users WHERE userID=? LIMIT 1`);
+  next();
+});
+router.delete('/', (req,res,next) => {
+  res.status(400).json( { success: false, error: 'TODO' } );
+});
 module.exports = router;
