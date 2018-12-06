@@ -4,10 +4,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
-const routeUsers   = require('../api/users');
-const routePosts   = require('../api/posts');
-const routeSession = require('../api/session');
-const routeTags    = require('../api/tags');
+const routeUsers         = require('../api/users');
+const routePosts         = require('../api/posts');
+const routeSession       = require('../api/session');
+const routeTags          = require('../api/tags');
+const routeComments      = require('../api/comments');
+const routeReportContent = require('../api/reportcontent');
 
 app.use(express.static('public'));
 
@@ -30,10 +32,12 @@ app.use((req,res,next) => {
 });
 
 /* Import routes */
-app.use('/users',   routeUsers);
-app.use('/posts',   routePosts);
-app.use('/session', routeSession);
-app.use('/tags',    routeTags);
+app.use('/users',         routeUsers);
+app.use('/posts',         routePosts);
+app.use('/session',       routeSession);
+app.use('/tags',          routeTags);
+app.use('/comments',      routeComments);
+app.use('/reportcontent', routeReportContent);
 
 // If no route is found, throw `Not found` error:
 app.use((req, res, next) => {

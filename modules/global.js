@@ -5,11 +5,20 @@ const isNumeric = (n) => {
     };
 
 const issetIsNumeric = (n) => {
-    if ( typeof n == 'undefined' ) {
+    if ( typeof n == 'undefined' || n == '' ) {
         return false;
     }else{
         return isNumeric (n);
     }
 }
 
-module.exports = { isNumeric, issetIsNumeric };
+const issetVar = (n) => {
+    if ( typeof n == 'undefined' || n == '' ) {
+        return false;
+    }else{
+        return true;
+    }
+}
+
+
+module.exports = { isNumeric, issetIsNumeric, issetVar };

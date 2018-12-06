@@ -8,7 +8,25 @@ const contentreport = require('../modules/contentreport');
 
 /* Deletes all the files related to one post */
 const deleteAllStoredPostFiles = (postID) => {
+  // TODO
   return true;
+}
+
+/* Does the post Exists by ID */
+const postExists = (postID) => {
+  return new Promise((resolve, reject) => {
+    db.query("SELECT COUNT(postID) AS postCount FROM posts WHERE postID=? LIMIT 1", postID, (e,r,f) => {
+      if ( e ) {
+        resolve(false);
+      }else{
+        if ( r[0].postCount == 1 ) {
+          resolve(true);
+        }else{
+          resolve(false);
+        }
+      }
+    });
+  });
 }
 
 /* Deletes all the linkings to one post (tags, comments, content reports and pet linkings) */
@@ -58,4 +76,4 @@ return new Promise((resolve, reject) => {
 });
 };
 
-module.exports = { deletePost };
+module.exports = { deletePost, postExists };

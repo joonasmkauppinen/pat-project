@@ -354,10 +354,5 @@ router.post('/upload', (req,res,next) => {
     res.status(200).json( { success: true } );
   }
 });
-router.post('/', (req,res,next) => {
-  res.status(200).json({
-    message: 'Handling POST requests to /users'
-  });
-});
 
 module.exports = router;
