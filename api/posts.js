@@ -91,6 +91,14 @@ router.post('/', (req,res,next) => {
  * @apiPermission LOGGED_IN
  */
 router.post('/getcontent', (req,res,next) => {
+  auth(req).then((isAuth) => {
+    if( isAuth.session ) {
+      req.auth = isAuth;
+    }
+    next();
+  });
+});
+router.post('/getcontent', (req,res,next) => {
   let response = { success : false };  
   console.log(req.body);
   const items = req.body.items.split("-");
@@ -103,11 +111,18 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-  db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, postMediaType, users.userName, users.userID, GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
+    let queryFetchAlsoOwnRatings = '';
+    if ( req.auth ) {
+      queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
+    }
+  db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
+            postMediaType, users.userName, users.userID, rating, 
+            GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
             FROM posts
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
             LEFT JOIN tags ON linkingsTagToPost.lttpTagLID=tagID
             LEFT JOIN users ON posts.postAddedBy=users.userID
+            ${queryFetchAlsoOwnRatings}
             WHERE postAddedBy=users.userID AND (`+queryWhereParams+`)
             GROUP BY postID`,
   (e,r,f) => {
@@ -115,6 +130,7 @@ router.post('/getcontent', (req,res,next) => {
       response.posts_count  = r.length;
       response.post_data = {}
       r.forEach( (i) => {
+          console.log(i);
           const dataItem = { 
                 added : formatTime.unixTimeAsDate(i.postAddTime), 
                 added_ago : formatTime.timeAgo(i.postAddTime), 
@@ -127,7 +143,7 @@ router.post('/getcontent', (req,res,next) => {
                 user_pic : 'img/usr/' + i.userID + '.png',
                 tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
                 pets : ['DemoPet1', 'Pet2'],
-                my_rate: '',
+                my_rate: ( i.rating ? i.rating : 0),
                 comments : 5 }
           response.post_data[i.postID] = ( dataItem );      
       });

@@ -10,6 +10,7 @@ const routeSession       = require('../api/session');
 const routeTags          = require('../api/tags');
 const routeComments      = require('../api/comments');
 const routeReportContent = require('../api/reportcontent');
+const routeRatings       = require('../api/ratings');
 
 app.use(express.static('public'));
 
@@ -38,6 +39,7 @@ app.use('/session',       routeSession);
 app.use('/tags',          routeTags);
 app.use('/comments',      routeComments);
 app.use('/reportcontent', routeReportContent);
+app.use('/ratings',       routeRatings);
 
 // If no route is found, throw `Not found` error:
 app.use((req, res, next) => {
