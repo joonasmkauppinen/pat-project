@@ -1,3 +1,5 @@
+'use strict';
+
 const express = require('express');
 const router = express.Router();
 const db = require('../modules/db');
@@ -8,7 +10,7 @@ const post = require('../modules/post');
 const report = require('../modules/report');
 
 /**
- * @api {post} /reportcontent/ Report Post by ID #INPROGRESS#
+ * @api {post} /reportcontent/ Report Post by ID
  * @apiName reportbypostid
  * @apiVersion 1.0.0
  * @apiGroup ReportContent

@@ -2,6 +2,22 @@
 
 const db = require('../modules/db');
 
+const userExists = (userID) => {
+    return new Promise((resolve, reject) => {
+        db.query("SELECT COUNT(userID) AS userCount FROM users WHERE userID=? LIMIT 1", [userID], (e,r,f) => {
+            if ( e == null ){
+                if ( r[0].userCount == 1 ) {
+                    resolve(true);
+                }else{
+                    resolve(false);
+                }
+            }else{
+                resolve(false);
+            }
+        });        
+    });
+};
+
 const getUser = (userID) => {
     return new Promise((resolve, reject) => {
         db.query("SELECT * FROM users WHERE userID=? LIMIT 1", [userID], (e,r,f) => {
@@ -56,4 +72,4 @@ const getAllPetIDsByUser = (userID) => {
 
 
 
-module.exports = { getUser, getAllPostIDsByUser, getAllPetIDsByUser };
+module.exports = { getUser, getAllPostIDsByUser, getAllPetIDsByUser, userExists };

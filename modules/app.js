@@ -11,6 +11,7 @@ const routeTags          = require('../api/tags');
 const routeComments      = require('../api/comments');
 const routeReportContent = require('../api/reportcontent');
 const routeRatings       = require('../api/ratings');
+const routeFollow        = require('../api/follow');
 
 app.use(express.static('public'));
 
@@ -40,6 +41,7 @@ app.use('/tags',          routeTags);
 app.use('/comments',      routeComments);
 app.use('/reportcontent', routeReportContent);
 app.use('/ratings',       routeRatings);
+app.use('/follow',        routeFollow);
 
 // If no route is found, throw `Not found` error:
 app.use((req, res, next) => {
