@@ -115,13 +115,12 @@ router.post('/getcontent', (req,res,next) => {
     if ( req.auth ) {
       queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
     }
-
   db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
             postMediaType, users.userName, users.userID, rating, 
-            (SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID) AS commentCount,
-            ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
-              FROM linkingsPetToPost, pets
-              WHERE lptpPostLID=postID AND pets.petID=linkingsPetToPost.lptpPetLID) AS pets,
+              ( SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID ) AS commentCount,
+                ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
+                  FROM linkingsPetToPost, pets
+                  WHERE lptpPostLID=postID AND pets.petID=linkingsPetToPost.lptpPetLID) AS pets,
             GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
             FROM posts
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
@@ -129,7 +128,7 @@ router.post('/getcontent', (req,res,next) => {
             LEFT JOIN users ON posts.postAddedBy=users.userID
             ${queryFetchAlsoOwnRatings}
             WHERE postAddedBy=users.userID AND (`+queryWhereParams+`)
-            GROUP BY postID`,
+            GROUP BY postID`,            
   (e,r,f) => {
     if ( e == null) {
       response.posts_count  = r.length;
@@ -162,7 +161,7 @@ router.post('/getcontent', (req,res,next) => {
 });
 
 /**
- * @api {delete} /posts/delete Delete Post by ID
+ * @api {delete} /posts/ Delete Post by ID
  * @apiName delete
  * @apiVersion 1.0.0
  * @apiGroup Posts
@@ -178,9 +177,9 @@ router.post('/getcontent', (req,res,next) => {
  * 
  * @apiPermission POST_DELETE, (or owner of the post)
  */
-router.delete('/:postID', (req,res,next) => {
-  if (global.issetIsNumeric(req.params.postID)) {
-    const postID = parseInt(req.params.postID);
+router.delete('/', (req,res,next) => {
+  if (global.issetIsNumeric(req.body.postID)) {
+    const postID = parseInt(req.body.postID);
     auth(req).then( (auth_response) => {
       if ( auth_response.session ) {
           post.deletePost(postID, auth_response).then((deletePostResponse) => {
@@ -199,9 +198,69 @@ router.delete('/:postID', (req,res,next) => {
   }
 });
 
+/**
+ * @api {patch} /posts/ Update Post
+ * @apiName update-posts
+ * @apiVersion 1.0.0
+ * @apiGroup Posts
+ *
+ * @apiParam {Integer} session_id Session ID.
+ * @apiParam {String} session_token Session Token.
+ * @apiParam {Integer} post_id Post ID to be deleted.
+ * 
+ * @apiParam {String} [description] Post description
+ * @apiParam {String} [tags] Tags separated by space
+ * @apiParam {String} [pets] Pet ID's separated by space
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded, post is updated successfully.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
+ * 
+ * @apiPermission POST_EDIT, (or owner of the post)
+ */
+router.patch('/', (req,res,next) => {
+  if ( global.issetIsNumeric(req.body.post_id) ) {
+    next();
+  }else{
+    res.status(400).json( { success:false, error: 'Parameter post_id (numeric) is required.' } );
+  }
+});
+router.patch('/', (req,res,next) => {
+  auth(req).then((r) => {
+    if ( r.session ) {
+      req.user_id = r.user_id;
+      if ( r.permission.inArray('POST_UPDATE') != -1 ) {
+        req.POST_UPDATE = 1;
+      }
+      next();
+    }else{
+      res.status(400).json( { success:false, error: 'You are not logged in / no session.' } );
+    }
+  });
+});
+router.patch('/', (req,res,next) => {
+  if ( global.issetVar ( req.body.description ) ) {
+    req.description = req.body.description;
+  }
+  if ( global.issetVar ( req.body.tags ) ) {
+    req.tags = req.body.tags;
+  }
+  if ( global.issetVar ( req.body.pets ) ) {
+    req.pets = req.body.pets;
+  }
+  next();
+});
+router.patch('/', (req,res,next) => {
+  //todo continue..
+});
+router.patch('/', (req,res,next) => {
+  res.status(400).json( { success:false, error: 'TODO' } );
+});
+
 
 /**
- * @api {post} /posts/upload Upload new Post #_IN_PROGRESS_#
+ * @api {post} /posts/upload Upload new Post
  * @apiName upload
  * @apiVersion 1.0.0
  * @apiGroup Posts
@@ -212,6 +271,7 @@ router.delete('/:postID', (req,res,next) => {
  * @apiParam {File} upload_file A file to upload
  * @apiParam {String} [description] Post description
  * @apiParam {String} [tags] Tags separated by space
+ * @apiParam {String} [pets] Pet ID's separated by space
  *
  * @apiSuccess {Boolean} success (true) API Call succeeded, a new post is uploaded
  * 
@@ -263,12 +323,12 @@ next();
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    createthumbnail.createThumb(req.file.path, 1000, './public/img/' + req.file.filename + '_orig', next);
+    createthumbnail.createThumb(req.file.path, 600, './public/img/' + req.file.filename + '_orig', next);
   }
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    createthumbnail.createThumb(req.file.path, 200, './public/img/thumb/' + req.file.filename, next);
+    createthumbnail.createThumb(req.file.path, 100, './public/img/thumb/' + req.file.filename, next);
   }
 });
 router.post('/upload', (req,res,next) => {

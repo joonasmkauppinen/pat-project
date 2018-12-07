@@ -26,12 +26,14 @@ const comment = require('../modules/comment');
  * @apiError {String} error Error description
  */
 router.post('/', (req,res,next) => {
+  // Check parameters
   if ( global.issetIsNumeric ( req.body.post_id ) ) {
     next();
   }else{
     res.status(400).json( { success: false, error: 'Parameter post_id is required and it must be a number.' } );
   }
 });
+// Check session
 router.post('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
@@ -41,13 +43,22 @@ router.post('/', (req,res,next) => {
     }
   });
 });
+// Check does the post exists
 router.post('/', (req,res,next) => {
-  // 
+  post.postExists(req.body.post_id).then((postExists) => {
+    if ( postExists ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Post does not exists!' } );
+    }
+  })
+});
+// Store values into the Database
+router.post('/', (req,res,next) => {
   db.query(`SELECT commentID, commentAddTime, comment, userName
             FROM comments, users
             WHERE commentPostLID=? AND users.userID=commentUserLID
-            ORDER BY commentAddTime DESC`, 
-  [req.body.post_id] ,(e,r,f) => {
+            ORDER BY commentAddTime DESC`, [req.body.post_id], (error,r,f) => {
     if ( e ) {
       res.status(400).json( { success: false, error: 'Database query failed.' } );
     }else{
@@ -56,9 +67,12 @@ router.post('/', (req,res,next) => {
       }else{
         const responseComments = [];
         for ( let i=0; i<r.length; i++){
-          responseComments.push( { id: r[i].commentID, user_name: r[i].userName, added: tf.unixTimeAsDate(r[i].commentAddTime), added_ago: tf.timeAgo(r[i].commentAddTime), comment: r[i].comment } );
+          responseComments.push( { id: r[i].commentID,
+                                   user_name: r[i].userName, 
+                                   added: tf.unixTimeAsDate(r[i].commentAddTime), 
+                                   added_ago: tf.timeAgo(r[i].commentAddTime), 
+                                   comment: r[i].comment } );
         }
-        console.log(responseComments);
         res.status(200).json( { success: true, amount: responseComments.length, comments: responseComments } );
       }
     }
@@ -118,7 +132,7 @@ router.post('/add', (req,res,next) => {
 });
 router.post('/add', (req,res,next) => {
   db.query(`INSERT INTO comments (commentPostLID, commentUserLID, commentAddTime, comment) VALUES (?, ?, ?, ?)`, 
-  [req.body.post_id, req.user_id, tf.systemTimestamp(), req.body.comment] ,(e,r,f) => {
+  [req.body.post_id, req.user_id, tf.systemTimestamp(), req.body.comment], (e,r,f) => {
     if ( !e ) {
       res.status(200).json( { success: true } );
     }else{

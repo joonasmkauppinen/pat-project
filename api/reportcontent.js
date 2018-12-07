@@ -3,11 +3,12 @@ const router = express.Router();
 const db = require('../modules/db');
 const auth = require('../modules/auth');
 const global = require('../modules/global');
+const timeFormatting = require('../modules/time-formatting');
 const post = require('../modules/post');
 const report = require('../modules/report');
 
 /**
- * @api {post} /reportcontent/ Report Post by ID
+ * @api {post} /reportcontent/ Report Post by ID #INPROGRESS#
  * @apiName reportbypostid
  * @apiVersion 1.0.0
  * @apiGroup ReportContent
@@ -29,7 +30,8 @@ router.post('/', (req,res,next) => {
   /* Check Session */
   auth(req).then( (r) => {
     if ( !r.session ) {
-      res.status(200).json( { success: false, error: 'You are not logged in.' } );
+      req.user_id = r.user_id;
+      res.status(400).json( { success: false, error: 'You are not logged in.' } );
     }else{
       next();
     }
@@ -41,16 +43,17 @@ router.post('/', (req,res,next) => {
   if ( global.issetIsNumeric(req.body.post_id) && global.issetIsNumeric(req.body.report_type) && global.issetVar(req.body.report_description) ) {
     next();
   }else{
-    res.status(200).json( { success: false, error: 'Required variables are not set - or values are in invalid format.' } );
+    res.status(400).json( { success: false, error: 'Required variables (post_id, report_type, report_description) are not set - or values are in invalid format.' } );
   }
 });
 /* Check does the Post Exists */
 router.post('/', (req,res,next) => {
   post.postExists(req.body.post_id).then( (postExists) => {
     if ( postExists ) {
+      req.body.post_id = parseInt(req.body.post_id);
       next();
     }else{
-      res.status(200).json( { success: false, error: 'Post does not exists.' } );
+      res.status(400).json( { success: false, error: 'Post does not exists.' } );
     }
   });
 });
@@ -60,17 +63,24 @@ router.post('/', (req,res,next) => {
       if ( reportTypeExists ) {
         next();
       }else{
-        res.status(200).json( { success: false, error: 'Report Type does not exists.' } );
+        res.status(400).json( { success: false, error: 'Report Type does not exists.' } );
       }
     });
   });
 router.post('/', (req,res,next) => {
-  // TODO
-  res.status(200).json( { success: true, error: 'suggesshh!' } );
+  db.query(`INSERT INTO contentReports (crPostLID, crReportTime, crReportedBy, crReportTypeLID, crDescription, crReportChecked) VALUES (?, ?, ?, ?, ?, ?)`,
+  [req.body.post_id, timeFormatting.systemTimestamp(), req.body.user_id, req.body.report_type, req.body.report_description, 0], (e,r,f) => {
+    if ( e ) {
+      console.log(e);
+      res.status(400).json( { success: false, error: 'Database query error.' } );
+    }else{
+      res.status(200).json( { success: true } );
+    }
+  });
   });  
 
 /**
- * @api {get} /reportcontent/types Get Content Report Types #_INPROGRESS_#
+ * @api {get} /reportcontent/types Get Content Report Types
  * @apiName types
  * @apiVersion 1.0.0
  * @apiGroup ReportContent
@@ -86,7 +96,7 @@ router.post('/', (req,res,next) => {
 router.get('/types', (req,res,next) => {
   db.query("SELECT crtID, crt FROM contentReportTypes ORDER BY crt ASC ", (e,r,f) => {
     if ( e ) {
-      res.status(200).json( { success: false, error: 'Database query failed.' } );
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
     }else{
       let reportTypes = [];
       if ( r.length > 0 ) {
