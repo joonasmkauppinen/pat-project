@@ -216,16 +216,17 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-    let queryFetchAlsoOwnRatings = '';
-    if ( req.auth ) {
-      queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
-    }
+  let queryFetchAlsoOwnRatings = '';
+  if ( req.auth ) {
+    queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
+  }
   db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
             postMediaType, users.userName, users.userID, ${(req.auth ? 'rating,' : '')} 
               ( SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID ) AS commentCount,
-                ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
-                  FROM linkingsPetToPost, pets
-                  WHERE lptpPostLID=postID AND pets.petID=linkingsPetToPost.lptpPetLID) AS pets,
+              ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
+                FROM linkingsPetToPost, pets
+                WHERE lptpPostLID=postID AND pets.petID=linkingsPetToPost.lptpPetLID) AS pets,
+              ( SELECT AVG(rating) FROM ratings WHERE ratingPostLID=postID ) AS averageRating,
             GROUP_CONCAT(tag SEPARATOR ' ') AS linkedTags
             FROM posts
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
@@ -253,6 +254,7 @@ router.post('/getcontent', (req,res,next) => {
                 tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
                 pets : ( i.pets == null || i.pets == '' ? [] : i.pets.split( '|' ) ),
                 my_rate: ( i.rating ? i.rating : 0),
+                avg_rating: (i.averageRating ? Math.round(i.averageRating) : 0),
                 comments : i.commentCount }
           response.post_data[i.postID] = ( dataItem );      
       });
