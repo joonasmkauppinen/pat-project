@@ -101,7 +101,6 @@ router.post('/', (req,res,next) => {
               req.queryWhere += (i!=0 ? ' OR ' : '' ) + 'postAddedBy='+parseInt(following[i]);
             }
             req.queryWhere += ')';
-            console.log('nexting');
             next();
           }else{
             res.status(200).json( {success: true, posts_count: 0, posts_data: {}, warning: 'Not following anyone.' } );
@@ -199,8 +198,7 @@ router.post('/getcontent', (req,res,next) => {
   });
 });
 router.post('/getcontent', (req,res,next) => {
-  let response = { success : false };  
-  console.log(req.body);
+  let response = { success : false };    
   const items = req.body.items.split("-");
   let queryWhereParams = '';
   if ( items.length > 0 ) {
@@ -234,7 +232,6 @@ router.post('/getcontent', (req,res,next) => {
       response.posts_count  = r.length;
       response.post_data = {}
       r.forEach( (i) => {
-          console.log(i);
           const dataItem = { 
                 added : formatTime.unixTimeAsDate(i.postAddTime), 
                 added_ago : formatTime.timeAgo(i.postAddTime), 
@@ -442,8 +439,6 @@ router.post('/upload', (req,res,next) => {
       if ( !err ) {
         const pixelColour = parseInt(image.getPixelColor(0,0));
         req.hexColour = (pixelColour.toString(16).substring(0,6));
-        console.log('=)')
-        console.log(req.hexColour)
         // Remove temporary 1x1 image file for colour
         fs.unlinkSync('./public/img/1px/' + req.file.filename + '.' + req.file_extension);
         next();
@@ -483,7 +478,6 @@ router.post('/upload', (req,res,next) => {
               req.addID = r.insertId;
               // Add tags to the post
               if ( req.tags.length > 0 ) {
-                console.log(req.tags);
                 tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
                   if ( r == true ) {
                     // SUCCESS !
@@ -515,7 +509,6 @@ router.post('/upload', (req,res,next) => {
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    console.log('ADDID: ' + req.addID);
     fs.rename('./public/img/' + req.file.filename + '_orig', './public/img/' + req.addID + '_' + req.mediaURI, (e) => {
       fs.rename('./public/img/thumb/' + req.file.filename, './public/img/thumb/' + req.addID + '_' + req.mediaURI, (e) => {
         //fs.unlinkSync('./public/img/' + req.file.filename);
