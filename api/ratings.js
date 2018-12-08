@@ -80,7 +80,6 @@ router.post('/', (req,res,next) => {
             res.status(400).json( { success: false, error: 'Database query failed (2).' } );
           }else{
             res.status(200).json( { success: true } );
-          next();
           }
         });
       }else{
