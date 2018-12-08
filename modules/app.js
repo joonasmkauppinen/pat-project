@@ -18,7 +18,7 @@ app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: true }))
 
 app.use((req,res,next) => {
-  console.log(`--- REQUEST --- [${req.method}] ${req.path}`);
+  console.log(`--- REQUEST --- [${req.method}] ${req.connection.remoteAddress} ${req.path}`);
   next();
   });
 
