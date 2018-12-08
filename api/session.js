@@ -25,7 +25,7 @@ const tf = require('../modules/time-formatting');
 router.post('/check', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
-      res.status(200).json( {success: 1, session_exists: 1, permissions : r.permissions } )
+      res.status(200).json( {success: 1, session_exists: 1, permissions : r.permissions, user_id : r.user_id } )
     }else{
       res.status(400).json( {success: 0, session_exists: 0, permissions: [] } );
     }
