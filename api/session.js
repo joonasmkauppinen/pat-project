@@ -4,6 +4,8 @@ const db = require('../modules/db');
 const md7 = require('../modules/md7');
 const auth = require('../modules/auth');
 const tf = require('../modules/time-formatting');
+const global = require('../modules/global');
+const session = require('../modules/session');
 
 /**
  * @api {post} /session/check Check is session valid and get permissions
@@ -80,38 +82,27 @@ router.post('/logout', (req,res,next) => {
  * @apiError {Boolean} success (false) API Call failed.
  * @apiError {String} error Error description.
  * 
- * @apiPermission HAS_ACCOUNT
+ * @apiPermission (HAS_ACCOUNT)
  */
 router.post('/login', (req,res,next) => {
-  let response = { success : false }
-  if ( typeof req.body.username == 'undefined' || typeof req.body.password == 'undefined' 
-      || req.body.username == '' || req.body.password == '' ) {
-    res.status(200).json({ success: 0, error: 'Both Username and Password are required.'});
+  if ( global.issetVar(req.body.username) && global.issetVar(req.body.password) ) {
+    next();
   }else{
-    const username = req.body.username;
-    const password = req.body.password;
-    db.query("SELECT userID FROM users WHERE `userName`=? AND `userPassword`='" + md7(password) + "' LIMIT 1", [username], (e,r,f) => {
-      if (r.length == 1 ) {
-        const token = md7( Math.floor((Math.random() * 10000) + 1) + username + Math.floor((Math.random() * 10000) + 1) + username + tf.systemTimestamp() );
-        const userID = r[0].userID;
-        db.query("INSERT INTO `sessions` SET sessionUserLID=?, sessionStartTime=?, sessionLastActive=?, sessionToken=?, sessionIP=?"
-        , [userID, tf.systemTimestamp(), tf.systemTimestamp(), token, req.connection.remoteAddress]
-        , (e,r,f) => {
-            if ( e == null ) {
-              response.success = true;
-              response.session_id = r.insertId;
-              response.token = token;
-              res.status(200).json( response );
-            }else{
-              res.status(200).json( {success:0, error : 'Database query error.'} );
-            }
-        });
-      }else{
-        response.error = 'Wrong username or password!';                      
-        res.status(200).json((response));
-      }
-    });  
+    res.status(200).json({ success: 0, error: 'Parameters username and password are required.'});
   }
+});
+router.post('/login', (req,res,next) => {
+  session.tryLogin(req.body.username, req.body.password).then ( (session) => {
+    if ( session ) {
+      if ( session.success ) {
+        res.status(200).json( session );
+      }else{
+        res.status(400).json( { success: 0, error: session.error } );
+      }
+    }else{
+      res.status(400).json( { success: 0, error: 'Login failed.'} );
+    }
+  });
 });
 
 module.exports = router;

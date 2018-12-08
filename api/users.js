@@ -7,77 +7,7 @@ const md7 = require('../modules/md7');
 const user = require('../modules/user');
 const post = require('../modules/post');
 const timeFormatting = require('../modules/time-formatting');
-
-/* Check if the username meets the username criteria */
-const isUsernameAcceptable = (userName) => {
-  const regex = /^[a-zA-Z0-9-_]+$/;
-  if(regex.test(userName)){
-      if ( userName.length > 16) {
-          return 'Username is too long. Max 16 characters!';
-        }else if ( userName.length < 2 ) {
-          return 'Username is too short. Min 2 characters!';
-        }else if (userName == ''){
-          return 'Username cannot be empty.';
-        }else{
-          return 'yes';
-        }
-    }else{
-      return 'Username contains illegal characters. Only a-z, A-Z, 0-9 and marks - and _ allowed (no spaces)!';
-    }
-  }
-
-/* Check if the email meets the email criteria */
-const isEmailAcceptable = (email) => {
-  const regex = /^(([^<>()[\]\\.,'";:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-  if(regex.test(email)){
-      return 'yes';
-    }else{
-      return 'Email address is invalid.';
-    }
-  }
-
-/* Check if the password meets the password criteria */
-const isPasswordAcceptable = (password) => {
-  if ( password.length < 6 ) {
-      return 'Password is too short. Should be at least 6 characters.';
-    }else{
-      return 'yes';
-    }
-  }
-
-/* Check if the username is available (not exists in Database) */
-const isUsernameAvailable = async (userName) => {
-  return new Promise((resolve,reject) => {
-    db.query("SELECT count(userID) AS `userCount` FROM users WHERE LOWER(userName)=?", userName.toLowerCase(), (e,r,f) => {
-      if ( e != null ) {
-          resolve(false);
-        }else{
-          if ( r[0].userCount != '0' ) {          
-            resolve(false);
-          }else{
-            resolve(true);
-          }
-        }
-      });
-  });
-  }
-
-/* Check if the email is available (not exists in Database) */
-const isEmailAvailable = async (emailAddress) => {
-  return new Promise((resolve,reject) => {
-    db.query("SELECT count(userID) AS `userCount` FROM users WHERE LOWER(userEmail)=?", emailAddress.trim().toLowerCase(), (e,r,f) => {
-      if ( e != null ) {
-          resolve(false);
-        }else{
-          if ( r[0].userCount != '0' ) {        
-            resolve(false);
-          }else{
-            resolve(true);
-          }
-        }
-      });
-  });
-  }
+const session = require('../modules/session');
 
 /**
  * @api {get} /users/username-available/:id Check is Username available
@@ -101,9 +31,9 @@ router.get('/username-available/:userName', (req,res,next) => {
     res.status(200).json({ success: false, error: ':userName parameter is not specified!'});
   }else{
     userName = userName.trim();
-    const isAcceptable = isUsernameAcceptable(userName);
+    const isAcceptable = user.isUsernameAcceptable(userName);
     if ( isAcceptable == 'yes' ) {
-        isUsernameAvailable(userName).then((r) => {
+        user.isUsernameAvailable(userName).then((r) => {
           console.log(r);
           if ( r == true ) {
               res.status(200).json({success: true, available: true});
@@ -247,63 +177,61 @@ router.post('/profile', (req,res,next) => {
  * @apiPermission everyone
  */
 router.post('/create-user-account', (req,res,next) => {
-  let response = { success: true };
-  if ( typeof req.body.username == 'undefined' || typeof req.body.password == 'undefined' || req.body.email == 'undefined'
-       || req.body.username == '' || typeof req.body.password == '' || req.body.email == '' ) {
-    response.success = false;
-    response.error = 'Params username, password and email are required.';
+  if ( global.issetVar(req.body.username) && global.issetVar(req.body.password) && global.issetVar(req.body.email) ) {
+    next();
   }else{
-    const username = req.body.username;
-    const password = req.body.password;
-    const email = req.body.email.trim().toLowerCase();
-    const usernameAcceptable = isUsernameAcceptable(username);
-    if ( usernameAcceptable == 'yes' ) {
-      const emailAcceptable = isEmailAcceptable(email);
-      if ( emailAcceptable == 'yes' ) {
-        const passwordAcceptable = isPasswordAcceptable(password);
-        if ( passwordAcceptable == 'yes' ) {
-          // Now we have pre-validated USERNAME, PASSWORD and EMAIL. Let's do the db queries.
-          isUsernameAvailable(username).then((isAvailable)=>{
-            if ( isAvailable ) {
-              isEmailAvailable(email).then((isAvailable)=>{
-                if ( isAvailable ) {
-                    // Everything is ok, let's create user!
-                    const userCreateTime = Math.floor(Date.now() / 1000);
-                    db.query("INSERT INTO `users` (userName, userPassword, userEmail, userGroupLID, userCreateTime, userLastSeenTime, userVerified) VALUES (?, ?, ?, ?, ?, ?, 0)", 
-                    [username, md7(password), email, process.env.DEFAULT_USER_GROUP, userCreateTime, 0, 0] ,(e,r,f) => {
-                      if ( e == null ) {
-                        // User is added to the database -> r.insertId would be needed if we want to autoLogin
-                        res.status(200).json((response));
-                      }else{
-                        res.status(200).json({success: false, error: 'Database query error.'});
-                      }
-                    });
-                  }else{
-                    res.status(200).json({success: false, error: 'Email address is already in use.'});
-                  }
-                });
-            }else{
-              res.status(200).json({success: false, error: 'Username is already in use.'});
-            }
-          });
-        }else{
-          response.success = false;
-          response.error = passwordAcceptable;  
-        }
-      }else{
-        response.success = false;
-        response.error = emailAcceptable;
-      }
-    }else{
-      response.success = false;
-      response.error = usernameAcceptable;
-    }
+    res.status(400).json({success: false, error: 'Params username, password and email are required!'});
   }
-  if ( response.success == false ) {
-    res.status(400).json(response);
+});
+router.post('/create-user-account', (req,res,next) => {
+  const isAcceptable = user.isUsernameAcceptable(req.body.username);
+  if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable });
+});
+router.post('/create-user-account', (req,res,next) => {
+  const isAcceptable = user.isEmailAcceptable(req.body.email);
+  if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable });
+});
+router.post('/create-user-account', (req,res,next) => {
+  const isAcceptable = user.isPasswordAcceptable(req.body.password);
+  if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable});
+});
+router.post('/create-user-account', (req,res,next) => {
+  user.isUsernameAvailable(req.body.username).then( (isAvailable) => {
+    if ( isAvailable ) {
+      next();
+    }else{
+      res.status(400).json({success: false, error: 'Username is already in use.'});
     }
   });
-
+});
+router.post('/create-user-account', (req,res,next) => {
+  user.isEmailAvailable(req.body.email).then( (isAvailable) => {
+    if ( isAvailable ) {
+      next();
+    }else{
+      res.status(400).json({success: false, error: 'Email address is already in use.'});
+    }
+  });
+});
+router.post('/create-user-account', (req,res,next) => {
+  // Everything is ok, let's create user!
+  db.query("INSERT INTO `users` (userName, userPassword, userEmail, userGroupLID, userCreateTime, userLastSeenTime, userVerified) VALUES (?, ?, ?, ?, ?, 0, 0)", 
+  [req.body.username, md7(req.body.password), req.body.email, process.env.DEFAULT_USER_GROUP, timeFormatting.systemTimestamp() ] ,(e,r,f) => {
+    if ( e == null ) {
+      // User is added to the database -> r.insertId would be needed if we want to autoLogin
+      session.tryLogin(req.body.username, req.body.password).then( (session) => {
+        if ( session ) {
+          res.status(200).json( {success: true, session: true, session_id: session.session_id, token: session.token } );
+        }else{
+          res.status(200).json( {success: true, session: false, warning: 'Logging in failed.' } );
+        }
+      });
+    }else{
+      res.status(200).json( {success: false, error: 'Database query error.'} );
+    }
+  });
+});
+                
 /**
  * @api {delete} /users Delete User #_IN_PROGRESS_#
  * @apiName users/delete
