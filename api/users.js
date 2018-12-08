@@ -6,6 +6,7 @@ const auth = require('../modules/auth');
 const md7 = require('../modules/md7');
 const user = require('../modules/user');
 const post = require('../modules/post');
+const timeFormatting = require('../modules/time-formatting');
 
 
 router.get('/', (req,res,next) => {
@@ -132,6 +133,115 @@ router.get('/username-available/:userName', (req,res,next) => {
     }
 });
 
+/**
+ * @api {post} /users/profile Get user profile information
+ * @apiName users-profile
+ * @apiVersion 1.0.0
+ * @apiGroup Users
+ *
+ * @apiParam {Integer} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Integer} user_id User ID
+ *
+ * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
+ * 
+ * @apiPermission Logged in
+ */
+router.post('/profile', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.user_id ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
+  }
+});
+router.post('/profile', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.post('/profile', (req,res,next) => {
+  user.userExists(parseInt(req.body.user_id)).then( (userExists) => {
+    if ( userExists ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'User does not exists' } );
+    }
+  });
+});
+router.post('/profile', (req,res,next) => {
+  user.userExists(parseInt(req.body.user_id)).then( (userExists) => {
+    if ( userExists ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'User does not exists' } );
+    }
+  });
+});
+router.post('/profile', (req,res,next) => {
+  db.query(`SELECT userID, userName, userDescription, userLastSeenTime, userCreateTime FROM users WHERE userID=? LIMIT 1`, 
+  [parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      if ( r.length == 1 ) {
+        req.userData = r[0];
+        next();
+      }else{
+        res.status(400).json( { success: false, error: 'User data cannot be found in the database.' } );  
+      }
+    }else{
+      res.status(400).json( { success: false, error: 'Database query failes' } );
+    }
+  });
+});
+router.post('/profile', (req,res,next) => {
+  db.query(`SELECT COUNT(lfuID) AS followers FROM linkingsFollowingUser WHERE lfuFollowingUserLID=?`, [parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      if ( r.length == 1 ){
+        req.followers = r[0].followers;
+      }      
+      next();
+    }else{ res.status(400).json( { success: false, error: 'Failted to fetch followers' } ) }
+  });
+});  
+router.post('/profile', (req,res,next) => {
+  db.query(`SELECT COUNT(lfuID) AS following FROM linkingsFollowingUser WHERE lfuFollowerUserLID=?`, [parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      if ( r.length == 1 ){
+        req.following = r[0].following;
+      }
+      next();
+    }else{ res.status(400).json( { success: false, error: 'Failted to fetch following' } ) }
+  });
+});  
+router.post('/profile', (req,res,next) => {
+  db.query(`SELECT COUNT(postID) AS postCount FROM posts WHERE postAddedBy=?`, [parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      if ( r.length == 1 ){
+        req.postCount = r[0].postCount;
+      }
+      next();
+    }else{ res.status(400).json( { success: false, error: 'Failted to fetch post amount' } ) }
+  });
+});  
+router.post('/profile', (req,res,next) => {
+  res.status(200).json( { success: true,
+                          user_name: req.userData.userName,
+                          user_description : req.userData.userDescription,
+                          following: req.following,
+                          followers: req.followers,
+                          posts: req.postCount,
+                          profile_pic_uri: 'img/usr/' + req.userData.userID + '.png',
+                          profile_create_time: timeFormatting.unixTimeAsDate(req.userData.userCreateTime),
+                          profile_create_time_ago: timeFormatting.timeAgo(req.userData.userCreateTime),
+                          last_seen_time :  timeFormatting.unixTimeAsDate(req.userData.userLastSeenTime),
+                          last_seen_time_ago: timeFormatting.timeAgo(req.userData.userLastSeenTime) } );
+});
 /**
  * @api {post} /users/create-user-account Create new User Account
  * @apiName create-user-account
