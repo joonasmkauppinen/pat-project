@@ -8,22 +8,6 @@ const user = require('../modules/user');
 const post = require('../modules/post');
 const timeFormatting = require('../modules/time-formatting');
 
-
-router.get('/', (req,res,next) => {
-  let response = { success : 0 }
-  db.query("SELECT * FROM users", (e,r,f) => {
-    if ( typeof r != 'undefined' ) {
-      response.users_count = r.length;
-      response.users = [];
-      r.forEach((i) => {
-        const addThis = ({ 'id' : i.userID, 'name' : i.userName, 'time_join' : '999 days ago', 'last_seen' : '999 days ago' });
-        response.users.push ( addThis );
-      });
-    }
-    res.status(200).json((response));
-  });
-});
-
 /* Check if the username meets the username criteria */
 const isUsernameAcceptable = (userName) => {
   const regex = /^[a-zA-Z0-9-_]+$/;
@@ -134,7 +118,7 @@ router.get('/username-available/:userName', (req,res,next) => {
 });
 
 /**
- * @api {post} /users/profile Get user profile information
+ * @api {post} /users/profile User Profile Data
  * @apiName users-profile
  * @apiVersion 1.0.0
  * @apiGroup Users

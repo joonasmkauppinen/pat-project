@@ -198,6 +198,13 @@ router.post('/getcontent', (req,res,next) => {
   });
 });
 router.post('/getcontent', (req,res,next) => {
+  if ( global.issetVar(req.body.items) ) {
+    next();
+  }else{
+    res.status(400).json( { success:false, error: 'Parameter items is required.' } );
+  }
+});
+router.post('/getcontent', (req,res,next) => {
   let response = { success : false };    
   const items = req.body.items.split("-");
   let queryWhereParams = '';
@@ -214,7 +221,7 @@ router.post('/getcontent', (req,res,next) => {
       queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
     }
   db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
-            postMediaType, users.userName, users.userID, rating, 
+            postMediaType, users.userName, users.userID, ${(req.auth ? 'rating,' : '')} 
               ( SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID ) AS commentCount,
                 ( SELECT GROUP_CONCAT(pet SEPARATOR '|') as pets 
                   FROM linkingsPetToPost, pets
@@ -237,6 +244,7 @@ router.post('/getcontent', (req,res,next) => {
                 added_ago : formatTime.timeAgo(i.postAddTime), 
                 addedby_user : i.userName, 
                 url : 'img/' + i.postID + '_' + i.postMediaURI, 
+                thumbnail : 'img/thumb/' + i.postID + '_' + i.postMediaURI, 
                 media_type : i.postMediaType, 
                 mime: i.postMimeType, 
                 post : i.post, 
