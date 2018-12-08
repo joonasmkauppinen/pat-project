@@ -270,7 +270,7 @@ router.post('/create-user-account', (req,res,next) => {
                     // Everything is ok, let's create user!
                     const userCreateTime = Math.floor(Date.now() / 1000);
                     db.query("INSERT INTO `users` (userName, userPassword, userEmail, userGroupLID, userCreateTime, userLastSeenTime, userVerified) VALUES (?, ?, ?, ?, ?, ?, 0)", 
-                    [username, md7(password), email, process.env.DEFAULT_USER_GROUP, userCreateTime, 0] ,(e,r,f) => {
+                    [username, md7(password), email, process.env.DEFAULT_USER_GROUP, userCreateTime, 0, 0] ,(e,r,f) => {
                       if ( e == null ) {
                         // User is added to the database -> r.insertId would be needed if we want to autoLogin
                         res.status(200).json((response));
