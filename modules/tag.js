@@ -28,6 +28,44 @@ const constructTagWhereSelector = (tagsArray) => {
     return `(${outputString}) `;
 };
 
+const getTagID = (tagString) => {
+    return new Promise((resolve, reject) => {
+        tagString = parseTagName(tagString);
+        db.query(`SELECT tagID FROM tags WHERE tag=? LIMIT 1`, [tagString], (e,r,f) => {
+            if ( e == null ){
+                if ( r.length == 1 ) {
+                    resolve( r[0].tagID );
+                }else{
+                    resolve(null);
+                }
+            }else{
+                resolve(null);
+            }
+        });        
+    });
+};
+
+const searchForTagIDs = (tagString) => {
+    return new Promise((resolve, reject) => {
+        tagString = '%'+parseTagName(tagString)+'%';
+        db.query(`SELECT tagID FROM tags WHERE tag LIKE ?`, [tagString], (e,r,f) => {
+            if ( e == null ){
+                if ( r.length > 0 ) {
+                    let responseArray = [];
+                    for ( let i=0; i<r.length; i++ ) {
+                        responseArray.push(r[0].tagID);
+                    }
+                    resolve ( responseArray );
+                }else{
+                    resolve( [] );
+                }
+            }else{     
+                resolve( [] );
+            }
+        });        
+    });
+};
+
 /* Get String Array of Tags by Post ID */
 const getTagsFromPost = (postID) => {
     return new Promise((resolve, reject) => {
@@ -148,4 +186,4 @@ const removeAllTagsFromPost = (postID) => {
     });
 };
 
-module.exports = { addTagsToPost, removeAllTagsFromPost, isAcceptableTag, getTagsFromPost };
+module.exports = { addTagsToPost, removeAllTagsFromPost, isAcceptableTag, getTagsFromPost, searchForTagIDs, getTagID };

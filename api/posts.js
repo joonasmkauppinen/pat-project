@@ -10,6 +10,8 @@ const tag = require('../modules/tag');
 const createthumbnail = require('../modules/createthumbnail');
 const jimp = require('jimp');
 const md5 = require('md5');
+const follow = require('../modules/follow');
+const user = require('../modules/user');
 
 const fs = require('fs');
 const multer = require('multer');
@@ -37,40 +39,138 @@ const upload = multer({dest: './public/img/'});
  * @apiError {String} error Error description
  */
 router.post('/', (req,res,next) => {
-  auth(req).then( (r) => {
-    
-    let filteringMethod = 'landing';
-    if ( r.session ) {
-      // enable other filtering methods here...
-      if ( typeof req.body.filter_by != 'undefined' ) {
-        switch ( req.body.filter_by.toLowerCase() ) {
-          case 'home':
-            break;
-          case 'tag':
-            break;
-          case 'tagsearch':
-            break;
-          case 'tagsearch':
-            break;
-          default:
-            res.status(400).json( { success:false, error: 'Unsupported filtering type provided: ' + req.body.filter_by } );
-        }
-      }
+  req.queryParameters = [];
+  req.queryWhere = '';
+  req.queryJoins = '';
+  req.queryFromExt = '';
+  auth(req).then( (authData) => {
+    if ( authData.session ) {
+      req.authData = authData;
     }
-
-    let response = { success : 1 }
-    db.query("SELECT postID FROM posts ORDER BY postAddTime DESC", (e,r,f) => {
-      response.posts_count  = r.length;
-      response.posts = [];
-      r.forEach((i) => {
-        response.posts.push ( i.postID );
-      });
-      res.status(200).json((response));
-    });
-
-
+  next();
   });
 });
+router.post('/', (req,res,next) => {
+  let errorHappened = 0;
+  if ( global.issetVar(req.body.filter_string) ) {
+    req.filter_string = req.body.filter_string;
+  }
+  if ( global.issetVar(req.body.filter_by) ) {
+    if ( req.authData) {
+      switch ( req.body.filter_by.toLowerCase() ) {
+        case '':
+          req.filter_by = 'home';
+          break;
+        case 'home':
+        case 'landing':
+          req.filter_by = req.body.filter_by.toLowerCase();
+          break;
+        case 'tag':
+        case 'tagsearch':
+        case 'user':
+          if ( !req.filter_string ) {
+            errorHappened = 1;
+            res.status(400).json( { success:false, error: 'If you use filtering type tag, tagsearch or user filter_string is required!' } );
+            }else{
+              req.filter_by = req.body.filter_by.toLowerCase();
+            }
+          break;
+      }
+    }else{
+      req.filter_by = '';
+    }
+  }else{
+    if ( req.authData ) {
+      req.filter_by = 'home';
+    }else{
+      req.filter_by = '';
+    }
+  }
+  if ( !errorHappened ) next();
+});
+router.post('/', (req,res,next) => {
+  if ( req.authData ) {
+    // enable other filtering methods here...
+      switch ( req.filter_by.toLowerCase() ) {
+        case 'home':
+        // Shows logged-in users following users posts
+        follow.getFollowingArrayByUserID(req.authData.user_id).then( (following) => {
+          if ( following.length > 0 ) {
+            req.queryWhere = ' WHERE (';
+            for ( let i=0; i<following.length; i++ ){
+              req.queryWhere += (i!=0 ? ' OR ' : '' ) + 'postAddedBy='+parseInt(following[i]);
+            }
+            req.queryWhere += ')';
+            console.log('nexting');
+            next();
+          }else{
+            res.status(200).json( {success: true, posts_count: 0, posts_data: {}, warning: 'Not following anyone.' } );
+          }
+        });
+        break;
+        case 'user':
+        // Shows one user's posts
+        if ( global.isNumeric(req.filter_string) ) {
+          req.queryWhere = ' WHERE (postAddedBy=?)';
+          req.queryParameters = [ req.filter_string ];
+          next();
+        }else{
+          res.status(200).json( {success: false, error: 'When searching for user, filter_by should be set and numeric!' } );
+        }
+        break;        
+      case 'tag':
+        tag.getTagID(req.filter_string).then(tagID => {
+          if ( tagID ) {
+            req.queryFromExt = ', linkingsTagToPost';
+            req.queryWhere = 'WHERE lttpPostLID=postID AND lttpTagLID=?';
+            req.queryParameters = [ tagID ];
+            next();
+          }else{
+            res.status(200).json( {success: true, posts_count: 0, posts_data: {}, warning: 'Tag not exists.' } );
+          }
+        });
+        break;
+      case 'tagsearch':
+        tag.searchForTagIDs( req.filter_string ).then(tagIDs => {
+          if ( tagIDs.length > 0 ) {
+            req.queryFromExt = ', linkingsTagToPost';
+            req.queryWhere = 'WHERE lttpPostLID=postID AND (';
+            for ( let i=0; i<tagIDs.length; i++ ) {
+              req.queryWhere += `${(i!=0?'OR ':'')}lttpTagLID=?`;
+              req.queryParameters.push(tagIDs[i]);
+            }
+            req.queryWhere += ')';
+            next();
+          }else{
+            res.status(200).json( {success: true, posts_count: 0, posts_data: {}, warning: 'No tags found.' } );
+          }
+        });
+        break;
+      case '':
+      case 'landing':
+        next();
+        break;
+      default:
+        res.status(400).json( { success:false, error: 'Unsupported filtering type provided: ' + req.body.filter_by } );
+    }
+  }else{
+    req.filter_by = '';
+    next();    
+  }
+});
+router.post('/', (req,res,next) => {
+  let response = { success : 1 }
+  db.query(`SELECT postID FROM posts${req.queryFromExt} ${req.queryJoins} ${req.queryWhere} ORDER BY postAddTime DESC`, req.queryParameters, (e,r,f) => {
+    response.filter_by = req.filter_by;
+    response.posts_count  = r.length;
+    response.posts = [];
+    r.forEach((i) => {
+      response.posts.push ( i.postID );
+    });
+    res.status(200).json((response));
+  });
+});
+
 
 /**
  * @api {post} /posts/getcontent Get Content of Posts by ID as an Object

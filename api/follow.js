@@ -7,7 +7,6 @@ const auth = require('../modules/auth');
 const global = require('../modules/global');
 const timeFormatting = require('../modules/time-formatting');
 const user = require('../modules/user');
-const report = require('../modules/report');
 
 /**
  * @api {post} /follow/ Follow User
