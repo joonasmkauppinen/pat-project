@@ -426,12 +426,12 @@ next();
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    createthumbnail.createThumb(req.file.path, 600, './public/img/' + req.file.filename + '_orig', next);
+    createthumbnail.createThumb(req.file.path, process.env.POST_UPLOAD_MEDIUM_SIZE, './public/img/' + req.file.filename + '_orig', next);
   }
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    createthumbnail.createThumb(req.file.path, 100, './public/img/thumb/' + req.file.filename, next);
+    createthumbnail.createThumb(req.file.path, process.env.POST_UPLOAD_THUMBNAIL_SIZE, './public/img/thumb/' + req.file.filename, next);
   }
 });
 router.post('/upload', (req,res,next) => {
