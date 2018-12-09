@@ -58,7 +58,7 @@ router.post('/', (req,res,next) => {
   db.query(`SELECT commentID, commentAddTime, comment, userName
             FROM comments, users
             WHERE commentPostLID=? AND users.userID=commentUserLID
-            ORDER BY commentAddTime DESC`, [req.body.post_id], (error,r,f) => {
+            ORDER BY commentAddTime DESC`, [req.body.post_id], (e,r,f) => {
     if ( e ) {
       res.status(400).json( { success: false, error: 'Database query failed.' } );
     }else{
