@@ -96,9 +96,9 @@ router.post('/', (req,res,next) => {
         // Shows logged-in users following users posts
         follow.getFollowingArrayByUserID(req.authData.user_id).then( (following) => {
           if ( following.length > 0 ) {
-            req.queryWhere = ' WHERE (';
+            req.queryWhere = ` WHERE (postAddedBy=${req.authData.user_id}`;
             for ( let i=0; i<following.length; i++ ){
-              req.queryWhere += (i!=0 ? ' OR ' : '' ) + 'postAddedBy='+parseInt(following[i]);
+              req.queryWhere += ' OR postAddedBy='+parseInt(following[i]);
             }
             req.queryWhere += ')';
             next();
@@ -175,7 +175,6 @@ router.post('/', (req,res,next) => {
   });
 });
 
-
 /**
  * @api {post} /posts/getcontent Get Content of Posts by ID as an Object
  * @apiName getcontent
@@ -221,10 +220,6 @@ router.post('/getcontent', (req,res,next) => {
         }
       }
     }
-  let queryFetchAlsoOwnRatings = '';
-  if ( req.auth ) {
-    queryFetchAlsoOwnRatings = `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}`;
-  }
   db.query(`SELECT postID, postAddTime, postAddedBy, postMediaURI, post, postColor, 
             postMediaType, users.userName, users.userID, ${(req.auth ? 'rating,' : '')} 
               ( SELECT COUNT(commentID) FROM comments WHERE commentPostLID=postID ) AS commentCount,
@@ -237,7 +232,7 @@ router.post('/getcontent', (req,res,next) => {
             LEFT JOIN linkingsTagToPost ON linkingsTagToPost.lttpPostLID=postID
             LEFT JOIN tags ON linkingsTagToPost.lttpTagLID=tagID
             LEFT JOIN users ON posts.postAddedBy=users.userID
-            ${queryFetchAlsoOwnRatings}
+            ${(req.auth ? `LEFT JOIN ratings ON ratings.ratingPostLID=postID AND ratingByUserLID=${req.auth.user_id}` : '')}
             WHERE postAddedBy=users.userID AND (`+queryWhereParams+`)
             GROUP BY postID`,            
   (e,r,f) => {
