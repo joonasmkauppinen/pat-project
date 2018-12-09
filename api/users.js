@@ -261,7 +261,7 @@ router.delete('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
       req.user_id = r.user_id;
-      if ( r.permissions.indexOf('USER_DELETE') ) {
+      if ( r.permissions.indexOf('USER_DELETE') != -1 ) {
         req.USER_DELETE = 1;
       }else{
         req.USER_DELETE = 0;
@@ -299,76 +299,13 @@ router.delete('/', (req,res,next) => {
   }
 });
 router.delete('/', (req,res,next) => {
-  user.getAllPostIDsByUser(req.body.user_id).then( (delUserPosts) => {
-    req.user_posts = delUserPosts;
+  user.getAllPostIDsByUser(req.body.user_id).then( (userPostIDs) => {
+    req.user_posts = userPostIDs;
     next();
   });  
 });
 router.delete('/', (req,res,next) => {
-  user.getAllPetIDsByUser(req.body.user_id).then( (delUserPets) => {
-    req.user_pets = delUserPets;
-    next();
-  });  
-});
-router.delete('/', (req,res,next) => {
-  if ( req.user_posts ) {
-    let queryWhereParams = '';
-    for ( let i=0; i<req.user_posts.length; i++ ){
-      queryWhereParams += (i==0?'':' OR ')+'p='+req.user_posts[i].id;
-      post.deleteAllStoredPostFiles(req.user_posts[i].id);
-    }
-    req.queryWhereParamsForPost = queryWhereParams;
-  }
-  next();
-});
-router.delete('/', (req,res,next) => {
-  if ( req.user_pets ) {
-    let queryWhereParams = '';
-    for ( let i=0; i<req.user_pets.length; i++ ){
-      queryWhereParams += (i==0?'':' OR ')+'p='+req.user_pets[i];
-    }
-    req.queryWhereParamsForPet = queryWhereParams;
-  }
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM comments WHERE commentUserLID=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM linkingsFollowingUser WHERE lfuFollowerUserLID=? OR lfuFollowingUserLID=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM contentReports WHERE crReportedBy=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  if ( req.user_pets ) {
-    console.log(`DELETE FROM linkingsPetToPost WHERE ${(req.queryWhereParamsForPet).replace(/p/g,'lptpPetLID')}`);
-  }
-  next();
-});
-router.delete('/', (req,res,next) => {
-  if ( req.user_posts ) {
-    console.log(`DELETE FROM linkingsTagToPost WHERE ${(req.queryWhereParamsForPost).replace(/p/g,'lttpPostLID')}`);
-    }
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM pets WHERE petOwnerLID=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM posts WHERE postAddedBy=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM sessions WHERE sessionUserLID=?`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM ratings WHERE ratingByUserLID=?`);
+  // TODO: delete files
   next();
 });
 router.delete('/', (req,res,next) => {
