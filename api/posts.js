@@ -135,7 +135,7 @@ router.post('/', (req,res,next) => {
             req.queryFromExt = ', linkingsTagToPost';
             req.queryWhere = 'WHERE lttpPostLID=postID AND (';
             for ( let i=0; i<tagIDs.length; i++ ) {
-              req.queryWhere += `${(i!=0?'OR ':'')}lttpTagLID=?`;
+              req.queryWhere += `${(i!=0?' OR ':'')}lttpTagLID=?`;
               req.queryParameters.push(tagIDs[i]);
             }
             req.queryWhere += ')';
@@ -160,13 +160,18 @@ router.post('/', (req,res,next) => {
 router.post('/', (req,res,next) => {
   let response = { success : 1 }
   db.query(`SELECT postID FROM posts${req.queryFromExt} ${req.queryJoins} ${req.queryWhere} ORDER BY postAddTime DESC`, req.queryParameters, (e,r,f) => {
-    response.filter_by = req.filter_by;
-    response.posts_count  = r.length;
-    response.posts = [];
-    r.forEach((i) => {
-      response.posts.push ( i.postID );
-    });
-    res.status(200).json((response));
+    if ( e ) {
+      console.log(e);
+      res.status(400).json( {success: false, error: 'Database query failed.'} );
+    }else{
+      response.filter_by = req.filter_by;
+      response.posts_count  = r.length;
+      response.posts = [];
+      r.forEach((i) => {
+        response.posts.push ( i.postID );
+      });
+      res.status(200).json((response));
+    }
   });
 });
 
