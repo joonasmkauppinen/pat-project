@@ -95,16 +95,12 @@ router.post('/', (req,res,next) => {
         case 'home':
         // Shows logged-in users following users posts
         follow.getFollowingArrayByUserID(req.authData.user_id).then( (following) => {
-          if ( following.length > 0 ) {
-            req.queryWhere = ` WHERE (postAddedBy=${req.authData.user_id}`;
-            for ( let i=0; i<following.length; i++ ){
-              req.queryWhere += ' OR postAddedBy='+parseInt(following[i]);
-            }
-            req.queryWhere += ')';
-            next();
-          }else{
-            res.status(200).json( {success: true, posts_count: 0, posts_data: {}, warning: 'Not following anyone.' } );
+          req.queryWhere = ` WHERE (postAddedBy=${req.authData.user_id}`;
+          for ( let i=0; i<following.length; i++ ){
+            req.queryWhere += ' OR postAddedBy='+parseInt(following[i]);
           }
+          req.queryWhere += ')';
+          next();
         });
         break;
         case 'user':
