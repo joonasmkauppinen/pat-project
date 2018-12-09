@@ -12,7 +12,7 @@ const auth = require('../modules/auth');
  *
  * @apiParam {Integer} session_id Session ID
  * @apiParam {String} session_token Session Token
- * @apiParam {String} [search] Search Tags by Value
+ * @apiParam {String} [search_term] Search Tags by Value
  * @apiParam {Integer{1-100}} [amount=20] Maximum amount of Tags
  * @apiParam {String="popularity","alphabetical"} [order_by="popularity"] Maximum amount of Tags
  *
@@ -38,8 +38,8 @@ router.post('/', (req,res,next) => {
         if ( typeof req.body.order_by != 'undefined' ) {
             if ( req.body.order_by == 'alphabetical' ) resultsOrderingType = 1;
         }
-        if ( typeof req.body.search_by != 'undefined' ) {
-          sqlSearchBy = req.body.search_by;
+        if ( typeof req.body.search_term != 'undefined' ) {
+          sqlSearchBy = req.body.search_term.toLowerCase();
         } 
         const sqlValues = [];
         if ( sqlSearchBy != '' ) {
@@ -53,9 +53,9 @@ router.post('/', (req,res,next) => {
               for(let i=0;i<r.length;i++){
                 arrayOfTags.push(r[i].tag);
               }
-              res.status(200).json( { success: true, tags: arrayOfTags } );  
+              res.status(200).json( { success: true, tag_count: r.length, tags: arrayOfTags } );  
             }else{
-              res.status(200).json( { success: true, tags: [] } );  
+              res.status(200).json( { success: true, tag_count: 0, tags: [] } );  
             }
           }else{
             console.log(e);

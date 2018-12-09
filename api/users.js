@@ -316,3 +316,49 @@ router.delete('/', (req,res,next) => {
   res.status(400).json( { success: false, error: 'TODO' } );
 });
 module.exports = router;
+
+/**
+ * @api {post} / List Users
+ * @apiName users
+ * @apiVersion 1.0.0
+ * @apiGroup Users
+ *
+ * @apiParam {Number} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {String} [search_term] Search term
+ * 
+ * @apiPermission Logged in
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded
+ * @apiSuccess {Number} user_count Count of users
+ * @apiSuccess {String[]} users
+ * 
+ * @apiError {Boolean} success (false) API Call failed
+ * @apiError {String} error Error description
+ */
+router.post('/', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.post('/', (req,res,next) => {
+  console.log((req.body.search_term ? '%'+req.body.search_term+'%' : '' ));
+  db.query(`SELECT userID, userName FROM users ${(req.body.search_term ? ' WHERE userName LIKE ?' : '')} ORDER BY userName ASC LIMIT 100`, 
+  (req.body.search_term ? '%'+req.body.search_term.toLowerCase()+'%' : '' ), (e,r,f) => {
+    if ( e ) {
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
+    }else{
+      const responseArray = [];
+      if ( r.length > 0 ) {
+        r.forEach((i) => {
+          responseArray.push( {id: i.userID, name: i.userName} );
+        });
+      }
+      res.status(200).json( { success: true, user_count: r.length, users: responseArray } );
+    }
+  });
+});
