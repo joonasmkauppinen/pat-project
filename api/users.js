@@ -482,3 +482,52 @@ router.post('/', (req,res,next) => {
     }
   });
 });
+
+/**
+ * @api {post} /get-user-id Get User ID by Username
+ * @apiName users/get-user-id
+ * @apiVersion 1.0.0
+ * @apiGroup Users
+ *
+ * @apiParam {Number} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {String} user_name Search term
+ * 
+ * @apiPermission Logged in
+ * 
+ * @apiSuccess {Boolean} success (true) API Call succeeded
+ * @apiSuccess {Number} user_id User ID
+ * 
+ * @apiError {Boolean} success (false) API Call failed
+ * @apiError {String} error Error description
+ */
+router.post('/get-user-id', (req,res,next) => {
+  if ( global.issetVar(req.body.user_name) ){
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter user_name is required' } );
+  }
+});
+router.post('/get-user-id', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.post('/get-user-id', (req,res,next) => {
+  db.query(`SELECT userID FROM users  WHERE userName=? ORDER BY userName ASC LIMIT 1`, 
+  [req.body.user_name], (e,r,f) => {
+    if ( e ) {
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
+    }else{
+      if ( r.length == 1 ) {
+        res.status(400).json( { success: true, user_id: r[0].userID } );
+      }else{
+        res.status(400).json( { success: false, error: 'User not found.' } );
+      }
+    }
+  });
+});
