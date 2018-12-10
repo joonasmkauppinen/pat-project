@@ -288,8 +288,8 @@ router.post('/getcontent', (req,res,next) => {
  * @apiPermission POST_DELETE, (or owner of the post)
  */
 router.delete('/', (req,res,next) => {
-  if (global.issetIsNumeric(req.body.postID)) {
-    const postID = parseInt(req.body.postID);
+  if (global.issetIsNumeric(req.body.post_id)) {
+    const postID = parseInt(req.body.post_id);
     auth(req).then( (auth_response) => {
       if ( auth_response.session ) {
           post.deletePost(postID, auth_response).then((deletePostResponse) => {
