@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+/* Route files in API folder */
 const routeUsers         = require('../api/users');
 const routePosts         = require('../api/posts');
 const routeSession       = require('../api/session');
@@ -14,9 +15,9 @@ const routeRatings       = require('../api/ratings');
 const routeFollow        = require('../api/follow');
 
 app.use(express.static('public'));
-
 app.use(bodyParser.urlencoded({ extended: true }))
 
+/* Display request in Console */
 app.use((req,res,next) => {
   console.log(`--- REQUEST --- [${req.method}] ${req.connection.remoteAddress} ${req.path}`);
   next();

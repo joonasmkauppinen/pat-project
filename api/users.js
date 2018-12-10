@@ -102,12 +102,6 @@ router.patch('/', (req,res,next) => {
   }
 });
 router.patch('/', (req,res,next) => {
-  if ( !global.issetVar ( req.body.description ) ) {
-    req.body.description = '';
-  }
-  next();
-});
-router.patch('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
       req.user_id = r.user_id;
@@ -149,14 +143,16 @@ router.patch('/', (req,res,next) => {
   }
 });
 router.patch('/', (req,res,next) => {
-  db.query(`UPDATE users SET userDescription=? WHERE userID=? LIMIT 1`, 
-  [req.body.description, parseInt(req.body.user_id)], (e,r,f) => {
-    if ( !e ) {
-      next();
-    }else{
-      res.status(400).json( { success: false, error: 'Database query failed.' } );
-    }
-  });
+  if ( typeof req.body.description != 'undefined' ) {
+    db.query(`UPDATE users SET userDescription=? WHERE userID=? LIMIT 1`, 
+    [req.body.description, parseInt(req.body.user_id)], (e,r,f) => {
+      if ( !e ) {
+        next();
+      }else{
+        res.status(400).json( { success: false, error: 'Database query failed.' } );
+      }
+    });
+  }
 });
 router.patch('/', (req,res,next) => {
   if ( req.file_uploaded ) {
