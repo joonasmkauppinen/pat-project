@@ -270,7 +270,7 @@ router.post('/profile', (req,res,next) => {
                           following: req.following,
                           followers: req.followers,
                           posts: req.postCount,
-                          profile_pic_uri: (fs.existsSync('public/img/usr/' + req.userData.userID + '.png' ? 'img/usr/' + req.userData.userID + '.png' : null)),
+                          profile_pic_uri: (fs.existsSync('public/img/usr/' + req.userData.userID + '.png') ? 'img/usr/' + req.userData.userID + '.png' : null),
                           profile_create_time: timeFormatting.unixTimeAsDate(req.userData.userCreateTime),
                           profile_create_time_ago: timeFormatting.timeAgo(req.userData.userCreateTime),
                           last_seen_time :  timeFormatting.unixTimeAsDate(req.userData.userLastSeenTime),
