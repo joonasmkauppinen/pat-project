@@ -506,7 +506,7 @@ router.post('/upload', (req,res,next) => {
               // Add tags to the post
               if ( req.tags.length > 0 ) {
                 tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
-                  
+                  next();
                 });                
               }
             }else{
