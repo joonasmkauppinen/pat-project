@@ -447,6 +447,7 @@ router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
     if ( req.mediatype == 'i' ) {
       createthumbnail.createOnePixel(req.file.path, './public/img/1px/' + req.file.filename + '.' + req.file_extension, next);
+      next();
     }else{
       // video thumb
       next();
