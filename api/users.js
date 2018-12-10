@@ -10,6 +10,9 @@ const timeFormatting = require('../modules/time-formatting');
 const session = require('../modules/session');
 const fs = require('fs');
 
+const multer = require('multer');
+const upload = multer({dest: './public/img/'});
+
 /**
  * @api {get} /users/username-available/:id Check is Username available
  * @apiName username-available
@@ -47,6 +50,117 @@ router.get('/username-available/:userName', (req,res,next) => {
       }
     }
 });
+
+/**
+ * @api {patch} /users/profile Update User Profile Data
+ * @apiName users-profile
+ * @apiVersion 1.0.0
+ * @apiGroup Users
+ *
+ * @apiParam {Number} session_id Session ID
+ * @apiParam {String} session_token Session Token
+ * @apiParam {Number} user_id User ID
+ * 
+ * @apiParam {String} [description] User description.
+ * @apiParam {File} [upload_file] New profile picture.
+ *
+ * @apiSuccess {Boolean} success (true) API Call succeeded.
+ * 
+ * @apiError {Boolean} success (false) API Call failed.
+ * @apiError {String} error Error description.
+ * 
+ * @apiPermission Logged in
+ */
+router.patch('/profile', (req,res,next) => {
+  if ( global.issetIsNumeric ( req.body.user_id ) ) {
+    next();
+  }else{
+    res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
+  }
+});
+router.patch('/profile', (req,res,next) => {
+  if ( !global.issetVar ( req.body.description ) ) {
+    req.body.description = '';
+  }
+  next();
+});
+router.patch('/', (req,res,next) => {
+  auth(req).then( (r) => {
+    if ( r.session ) {
+      req.user_id = r.user_id;
+      if ( r.permissions.indexOf('USER_PROFILE_EDIT') != -1 ) {
+        req.USER_PROFILE_EDIT = 1;
+      }else{
+        req.USER_PROFILE_EDIT = 0;
+      }
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
+    }
+  });
+});
+router.patch('/', (req,res,next) => {
+  if ( req.body.user_id != req.user_id ) {
+    user.getUser(req.body.user_id).then( (usr) => {
+      if ( usr ) {
+        next();
+      }else{
+        res.status(400).json( { success: false, error: 'User not found.' } );
+      }
+    });    
+  }else{
+    next();
+  }
+});
+router.patch('/', (req,res,next) => {
+  if ( req.body.user_id == req.user_id ) {
+    // User is modifying its own account.
+    next();
+  }else{
+    // User tries to delete other users account
+    if ( req.USER_PROFILE_EDIT ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Unauthorized! You do not have permission to modify other users\' accounts!' } );
+    }
+  }
+});
+router.patch('/', (req,res,next) => {
+  db.query(`UPDATE users SET userDescription=? WHERE userID=? LIMIT 1`, 
+  [req.body.description, parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
+    }
+  });
+});
+router.patch('/', upload.single('upload_file'), (req,res,next) => {
+  if ( req.file ) {
+    // Define Supported Mime Types for Uploads:
+    const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
+
+    // Check, is the MimeType supported, otherwise throw an error
+    if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
+      // Export file extension from FileName
+      const fileExtension = req.file.originalname.split('.').pop();
+      req.file_extension = fileExtension;
+      req.mimetype = req.file.mimetype;
+    }else{
+      res.status(400).json( { success: false, error: 'The File MimeType of the Uploaded Image is not supported.' } );
+    }
+  }else{
+    // no file
+    res.status(200).json( { success: true } );
+  }
+});
+router.patch('/', (req,res,next) => {
+  createthumbnail.createThumb(req.file.path, 300, './public/img/usr/' + parseInt(req.body.user_id) + '.png', next);
+});
+router.patch('/', (req,res,next) => {
+  res.status(200).json( { success: true } );
+});
+
 
 /**
  * @api {post} /users/profile User Profile Data
