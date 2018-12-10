@@ -489,8 +489,6 @@ router.post('/upload', (req,res,next) => {
           }
         }
       }
-    }else{
-      next();
     }
   }
   next();
@@ -536,6 +534,7 @@ router.post('/upload', (req,res,next) => {
       fs.rename('./public/img/' + req.file.filename + '_orig', './public/img/' + req.addID + '_' + req.mediaURI, (e) => {
           fs.rename('./public/img/thumb/' + req.file.filename, './public/img/thumb/' + req.addID + '_' + req.mediaURI, (e) => {
             //fs.unlinkSync('./public/img/' + req.file.filename);
+            next();
           });
       });
     }else{
