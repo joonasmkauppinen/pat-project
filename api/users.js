@@ -524,7 +524,7 @@ router.post('/get-user-id', (req,res,next) => {
       res.status(400).json( { success: false, error: 'Database query failed.' } );
     }else{
       if ( r.length == 1 ) {
-        res.status(400).json( { success: true, user_id: r[0].userID } );
+        res.status(200).json( { success: true, user_id: r[0].userID } );
       }else{
         res.status(400).json( { success: false, error: 'User not found.' } );
       }
