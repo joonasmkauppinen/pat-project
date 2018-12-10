@@ -12,6 +12,13 @@ const jimp = require('jimp');
 const md5 = require('md5');
 const follow = require('../modules/follow');
 const user = require('../modules/user');
+const ffprobePath = require('@ffprobe-installer/ffprobe').path;
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
+
+
 
 const fs = require('fs');
 const multer = require('multer');
@@ -240,13 +247,13 @@ router.post('/getcontent', (req,res,next) => {
                 added : formatTime.unixTimeAsDate(i.postAddTime), 
                 added_ago : formatTime.timeAgo(i.postAddTime), 
                 addedby_user : i.userName, 
-                url : 'img/' + i.postID + '_' + i.postMediaURI, 
-                thumbnail : 'img/thumb/' + i.postID + '_' + i.postMediaURI, 
+                url : (fs.existsSync('public/img/' + i.postID + '_' + i.postMediaURI) ? 'img/' + i.postID + '_' + i.postMediaURI : null), 
+                thumbnail : (fs.existsSync('public/img/thumb/' + i.postID + '_' + i.postMediaURI + (i.postMediaType == 'v' ? '.png' : '')) ? 'img/thumb/' + i.postID + '_' + i.postMediaURI + (i.postMediaType == 'v' ? '.png' : '') : null), 
                 media_type : i.postMediaType, 
                 mime: i.postMimeType, 
                 post : i.post, 
                 color : i.postColor,
-                user_pic : 'img/usr/' + i.userID + '.png',
+                user_pic : ( fs.existsSync('public/img/usr/' + i.userID + '.png') ? 'img/usr/' + i.userID + '.png' : null ),
                 tags : ( i.linkedTags == null || i.linkedTags == '' ? [] : i.linkedTags.split( ' ' ) ), 
                 pets : ( i.pets == null || i.pets == '' ? [] : i.pets.split( '|' ) ),
                 my_rate: ( i.rating ? i.rating : 0),
@@ -361,7 +368,6 @@ router.patch('/', (req,res,next) => {
   res.status(400).json( { success:false, error: 'TODO' } );
 });
 
-
 /**
  * @api {post} /posts/upload Upload new Post
  * @apiName upload
@@ -387,32 +393,32 @@ router.post('/upload', upload.single('upload_file'), (req,res,next) => {
   req.upload_error = false;
   req.upload_error_description = '';
   // First step : Upload the File to the Server
+  if ( req.file ) {
+    // Define Supported Mime Types for Uploads:
+    const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 
+    'video/x-m4v', 'video/mpeg', 'video/mp4', 'video/ogg', 'video/webm', 'video/quicktime'];
 
-  // Define Supported Mime Types for Uploads:
-  const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp', 
-  'video/x-m4v', 'video/mpeg', 'video/mp4', 'video/ogg', 'video/webm', 'video/quicktime'];
-  
-  /* Preferred audio types if we want to use AUDIO uploading: 'audio/x-aac', 'audio/midi', 'audio/mpeg', 'audio/mp4', 'audio/ogg', 'audio/webm', 'audio/x-wav' */
-
-  // Check, is the MimeType supported, otherwise throw an error
-  if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
-    // Export file extension from FileName
-    const fileExtension = req.file.originalname.split('.').pop();
-    req.file_extension = fileExtension;
-    req.mimetype = req.file.mimetype;
-    req.mediatype = req.file.mimetype.substring(0,1); // Mediatype: i = image, v = video
+    // Check, is the MimeType supported, otherwise throw an error
+    if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
+      // Export file extension from FileName
+      const fileExtension = req.file.originalname.split('.').pop();
+      req.file_extension = fileExtension;
+      req.mimetype = req.file.mimetype;
+      req.mediatype = req.file.mimetype.substring(0,1); // Mediatype: i = image, v = video
+      console.log(`---  INFO   --- [Upload file mimetype: ${req.mimetype}}`);
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'The File MimeType of the Uploaded File is not supported.' } );
+    }
   }else{
-    req.upload_error = true;
-    req.upload_error_description = 'The File MimeType of the Uploaded File is not supported.';
+    res.status(400).json( { success: false, error: 'Media upload failed.' } );
   }
-next();
 });
 router.post('/upload', (req,res,next) => {
-  if ( !req.upload_error ) {
     let postDescription = '';
     if ( typeof req.body.description != 'undefined' ) {
       postDescription = req.body.description;
-      if ( postDescription.length > process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH ) {
+      if ( postDescription.length > parseInt(process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH) ) {
           req.upload_error = true;
           req.upload_error_description = 'Description is too long. Maximum length allowed is ' + process.env.POST_UPLOAD_DESCRIPTION_MAX_LENGTH + ' characters.';
       }else{
@@ -421,22 +427,32 @@ router.post('/upload', (req,res,next) => {
     }else{
       req.description = '';
     }
-  }
-next();
+  next();
 });
 router.post('/upload', (req,res,next) => {
-  if ( !req.upload_error ) {
+  if ( !req.upload_error && req.mediatype == 'i' ) {
     createthumbnail.createThumb(req.file.path, 800, './public/img/' + req.file.filename + '_orig', next);
+  }else{
+    next();
   }
 });
 router.post('/upload', (req,res,next) => {
-  if ( !req.upload_error ) {
+  if ( !req.upload_error && req.mediatype == 'i' ) {
     createthumbnail.createThumb(req.file.path, 200, './public/img/thumb/' + req.file.filename, next);
+  }else{
+    next();
   }
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    createthumbnail.createOnePixel(req.file.path, './public/img/1px/' + req.file.filename + '.' + req.file_extension, next);
+    if ( req.mediatype == 'i' ) {
+      createthumbnail.createOnePixel(req.file.path, './public/img/1px/' + req.file.filename + '.' + req.file_extension, next);
+    }else{
+      // video thumb
+      next();
+    }
+  }else{
+    next();
   }
 });
 router.post('/upload', (req,res,next) => {
@@ -446,13 +462,18 @@ router.post('/upload', (req,res,next) => {
         const pixelColour = parseInt(image.getPixelColor(0,0));
         req.hexColour = (pixelColour.toString(16).substring(0,6));
         // Remove temporary 1x1 image file for colour
-        fs.unlinkSync('./public/img/1px/' + req.file.filename + '.' + req.file_extension);
-        next();
+        fs.unlink('./public/img/1px/' + req.file.filename + '.' + req.file_extension, (e) => {
+          if ( e ) console.log('--- WARNING --- Deleting 1px file failed!');
+          next();
+        });
       }else{
-        req.hexColour = '';
+        console.log(`---  INFO   --- [Cannot read 1x1 Image Background Color, will be using default.]`);
+        req.hexColour = '222222';
         next();
       }
     });
+  }else{
+    next();
   }
 });
 router.post('/upload', (req,res,next) => {
@@ -485,25 +506,16 @@ router.post('/upload', (req,res,next) => {
               // Add tags to the post
               if ( req.tags.length > 0 ) {
                 tag.addTagsToPost(req.tags,r.insertId).then((r)=>{
-                  if ( r == true ) {
-                    // SUCCESS !
-                    next();
-                  }else{
-                    // WARNING, ERROR WHILE ADDING TAGS!
-                    next();
-                  }
-                });
-                }else{
-                  // SUCCESS !
-                  next();
-                }
+                  
+                });                
+              }
             }else{
               console.log('ERROR.');
               console.log(e);
               req.upload_error = true;
               req.upload_error_description = 'Database query error.';
-              next();
             }
+        next();
         });      
       }else{
         req.upload_error = true;
@@ -511,25 +523,36 @@ router.post('/upload', (req,res,next) => {
         next();
       }
     });
+  }else{
+    next();
   }
 });
 router.post('/upload', (req,res,next) => {
   if ( !req.upload_error ) {
-    fs.rename('./public/img/' + req.file.filename + '_orig', './public/img/' + req.addID + '_' + req.mediaURI, (e) => {
-      fs.rename('./public/img/thumb/' + req.file.filename, './public/img/thumb/' + req.addID + '_' + req.mediaURI, (e) => {
-        //fs.unlinkSync('./public/img/' + req.file.filename);
+    if ( req.mediatype == 'i' ) {
+      fs.rename('./public/img/' + req.file.filename + '_orig', './public/img/' + req.addID + '_' + req.mediaURI, (e) => {
+          fs.rename('./public/img/thumb/' + req.file.filename, './public/img/thumb/' + req.addID + '_' + req.mediaURI, (e) => {
+            //fs.unlinkSync('./public/img/' + req.file.filename);
+            next();
+          });
       });
-    });
+    }else{
+    const proc = ffmpeg(req.file.path)
+    .takeScreenshots({count: 1, size: '300x300', filename: req.addID + '_' + req.mediaURI + '.png'},'./public/img/thumb/');
+    next();
+    }
   }else{
     console.log('errors');
+    next();
   }
-  next();
 });
 router.post('/upload', (req,res,next) => {
   // handle final response to the user
   if ( req.upload_error ) {
     res.status(400).json( { success: false, error: req.upload_error_description } );
+    console.log(`--- WARNING --- [Media upload FAILED: ${req.upload_error_description}]`);
   }else{
+    console.log('--- SUCCESS --- [Media upload succeeded!]');
     res.status(200).json( { success: true } );
   }
 });

@@ -8,6 +8,7 @@ const user = require('../modules/user');
 const post = require('../modules/post');
 const timeFormatting = require('../modules/time-formatting');
 const session = require('../modules/session');
+const fs = require('fs');
 
 /**
  * @api {get} /users/username-available/:id Check is Username available
@@ -150,7 +151,7 @@ router.post('/profile', (req,res,next) => {
                           following: req.following,
                           followers: req.followers,
                           posts: req.postCount,
-                          profile_pic_uri: 'img/usr/' + req.userData.userID + '.png',
+                          profile_pic_uri: (fs.existsSync('public/img/usr/' + req.userData.userID + '.png' ? 'img/usr/' + req.userData.userID + '.png' : null)),
                           profile_create_time: timeFormatting.unixTimeAsDate(req.userData.userCreateTime),
                           profile_create_time_ago: timeFormatting.timeAgo(req.userData.userCreateTime),
                           last_seen_time :  timeFormatting.unixTimeAsDate(req.userData.userLastSeenTime),

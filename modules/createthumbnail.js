@@ -6,7 +6,7 @@ const createThumb = (sourceFile, width, destinationFile, next) => {
     .resize(width)
     .toFile(destinationFile)
     .then(() => {
-      console.log('Resize OK');
+      console.log(`---  INFO   --- Resize OK`);
       next();
     }).catch(err => {
       console.log(err)
@@ -19,7 +19,7 @@ const createOnePixel = (sourceFile, destinationFile, next) => {
       .resize(1,1)
       .toFile(destinationFile)
       .then(() => {
-        console.log('1x1 Resize OK');
+        console.log(`---  INFO   --- Resize OK (1x1)`);
         next();
       }).catch(err => {
         console.log(err)
