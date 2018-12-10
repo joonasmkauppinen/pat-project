@@ -536,7 +536,7 @@ router.post('/upload', (req,res,next) => {
           });
       });
     }else{
-    fs.copyFileSync(req.file.path, './public/img/thumb/' + req.addID + '_' + req.mediaURI);
+    fs.copyFileSync(req.file.path, './public/img/' + req.addID + '_' + req.mediaURI);
     const proc = ffmpeg(req.file.path)
     .takeScreenshots({count: 1, size: '300x300', filename: req.addID + '_' + req.mediaURI + '.png'},'./public/img/thumb/');
     next();
