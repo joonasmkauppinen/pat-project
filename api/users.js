@@ -9,6 +9,7 @@ const post = require('../modules/post');
 const timeFormatting = require('../modules/time-formatting');
 const session = require('../modules/session');
 const fs = require('fs');
+const createthumbnail = require('../modules/createthumbnail');
 
 const multer = require('multer');
 const upload = multer({dest: './public/img/'});
@@ -71,14 +72,36 @@ router.get('/username-available/:userName', (req,res,next) => {
  * 
  * @apiPermission Logged in
  */
-router.patch('/profile', (req,res,next) => {
+router.patch('/', upload.single('upload_file'), (req,res,next) => {
+  if ( req.file ) {
+    // Define Supported Mime Types for Uploads:
+    const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+    // Check, is the MimeType supported, otherwise throw an error
+    if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
+      // Export file extension from FileName
+      const fileExtension = req.file.originalname.split('.').pop();
+      req.file_extension = fileExtension;
+      req.mimetype = req.file.mimetype;
+      req.file_uploaded = true;
+      next();
+    }else{
+      res.status(400).json( { success: false, error: 'The File MimeType of the Uploaded Image is not supported.' } );
+    }
+  }else{
+    // no file
+    req.file_uploaded = false;
+    next();
+  }
+});
+router.patch('/', (req,res,next) => {
   if ( global.issetIsNumeric ( req.body.user_id ) ) {
     next();
   }else{
     res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
   }
 });
-router.patch('/profile', (req,res,next) => {
+router.patch('/', (req,res,next) => {
   if ( !global.issetVar ( req.body.description ) ) {
     req.body.description = '';
   }
@@ -135,33 +158,19 @@ router.patch('/', (req,res,next) => {
     }
   });
 });
-router.patch('/', upload.single('upload_file'), (req,res,next) => {
-  if ( req.file ) {
-    // Define Supported Mime Types for Uploads:
-    const supportedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/bmp'];
-
-    // Check, is the MimeType supported, otherwise throw an error
-    if ( supportedMimeTypes.indexOf(req.file.mimetype) != -1 ) {
-      // Export file extension from FileName
-      const fileExtension = req.file.originalname.split('.').pop();
-      req.file_extension = fileExtension;
-      req.mimetype = req.file.mimetype;
-    }else{
-      res.status(400).json( { success: false, error: 'The File MimeType of the Uploaded Image is not supported.' } );
-    }
+router.patch('/', (req,res,next) => {
+  if ( req.file_uploaded ) {
+    const imgFile = './public/img/usr/' + parseInt(req.body.user_id) + '.png';
+    fs.unlink(imgFile, (e) => {
+      createthumbnail.createThumb(req.file.path, 300, imgFile, next);
+    });
   }else{
-    // no file
     res.status(200).json( { success: true } );
   }
 });
 router.patch('/', (req,res,next) => {
-  createthumbnail.createThumb(req.file.path, 300, './public/img/usr/' + parseInt(req.body.user_id) + '.png', next);
+  res.status(200).json( { success: true } );  
 });
-router.patch('/', (req,res,next) => {
-  res.status(200).json( { success: true } );
-});
-
-
 /**
  * @api {post} /users/profile User Profile Data
  * @apiName users-profile
