@@ -194,6 +194,7 @@ router.post('/profile', (req,res,next) => {
 router.post('/profile', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
+      req.auth = r;
       next();
     }else{
       res.status(400).json( { success: false, error: 'You are not logged in / no valid session.' } );
@@ -262,6 +263,19 @@ router.post('/profile', (req,res,next) => {
       next();
     }else{ res.status(400).json( { success: false, error: 'Failted to fetch post amount' } ) }
   });
+});
+router.post('/profile', (req,res,next) => {
+  db.query(`SELECT lfuID FROM linkingsFollowingUser WHERE lfuFollowerUserLID=? AND lfuFollowingUserLID=? LIMIT 1`, 
+  [req.auth.user_id, parseInt(req.body.user_id)], (e,r,f) => {
+    if ( !e ) {
+      if ( r.length == 1 ){
+        res.following = true;
+      }else{
+        res.following = false;
+      }
+      next();
+    }else{ res.status(400).json( { success: false, error: 'Failted to fetch following this.' } ) }
+  });
 });  
 router.post('/profile', (req,res,next) => {
   res.status(200).json( { success: true,
@@ -270,6 +284,7 @@ router.post('/profile', (req,res,next) => {
                           following: req.following,
                           followers: req.followers,
                           posts: req.postCount,
+                          i_am_following: res.following,
                           profile_pic_uri: (fs.existsSync('public/img/usr/' + req.userData.userID + '.png') ? 'img/usr/' + req.userData.userID + '.png' : null),
                           profile_create_time: timeFormatting.unixTimeAsDate(req.userData.userCreateTime),
                           profile_create_time_ago: timeFormatting.timeAgo(req.userData.userCreateTime),
