@@ -279,6 +279,7 @@ router.post('/profile', (req,res,next) => {
 });  
 router.post('/profile', (req,res,next) => {
   res.status(200).json( { success: true,
+                          user_id: parseInt(req.body.user_id),
                           user_name: req.userData.userName,
                           user_description : req.userData.userDescription,
                           following: req.following,
