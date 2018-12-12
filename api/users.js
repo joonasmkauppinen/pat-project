@@ -198,6 +198,7 @@ router.post('/profile', (req,res,next) => {
     res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
   }
 });
+// Check session
 router.post('/profile', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
@@ -208,6 +209,7 @@ router.post('/profile', (req,res,next) => {
     }
   });
 });
+// Check requested User ID
 router.post('/profile', (req,res,next) => {
   user.userExists(parseInt(req.body.user_id)).then( (userExists) => {
     if ( userExists ) {
@@ -217,15 +219,7 @@ router.post('/profile', (req,res,next) => {
     }
   });
 });
-router.post('/profile', (req,res,next) => {
-  user.userExists(parseInt(req.body.user_id)).then( (userExists) => {
-    if ( userExists ) {
-      next();
-    }else{
-      res.status(400).json( { success: false, error: 'User does not exists' } );
-    }
-  });
-});
+// Get profile info from DB
 router.post('/profile', (req,res,next) => {
   db.query(`SELECT userID, userName, userDescription, userLastSeenTime, userCreateTime FROM users WHERE userID=? LIMIT 1`, 
   [parseInt(req.body.user_id)], (e,r,f) => {
@@ -241,6 +235,7 @@ router.post('/profile', (req,res,next) => {
     }
   });
 });
+// Get Count "Followers"
 router.post('/profile', (req,res,next) => {
   db.query(`SELECT COUNT(lfuID) AS followers FROM linkingsFollowingUser WHERE lfuFollowingUserLID=?`, [parseInt(req.body.user_id)], (e,r,f) => {
     if ( !e ) {
@@ -250,7 +245,8 @@ router.post('/profile', (req,res,next) => {
       next();
     }else{ res.status(400).json( { success: false, error: 'Failted to fetch followers' } ) }
   });
-});  
+});
+// Get Count "Following"
 router.post('/profile', (req,res,next) => {
   db.query(`SELECT COUNT(lfuID) AS following FROM linkingsFollowingUser WHERE lfuFollowerUserLID=?`, [parseInt(req.body.user_id)], (e,r,f) => {
     if ( !e ) {
@@ -261,6 +257,7 @@ router.post('/profile', (req,res,next) => {
     }else{ res.status(400).json( { success: false, error: 'Failted to fetch following' } ) }
   });
 });  
+// Get Count "Number of Posts uploaded by that user"
 router.post('/profile', (req,res,next) => {
   db.query(`SELECT COUNT(postID) AS postCount FROM posts WHERE postAddedBy=?`, [parseInt(req.body.user_id)], (e,r,f) => {
     if ( !e ) {
@@ -271,6 +268,7 @@ router.post('/profile', (req,res,next) => {
     }else{ res.status(400).json( { success: false, error: 'Failted to fetch post amount' } ) }
   });
 });
+// Get Count "Check am I following that user"
 router.post('/profile', (req,res,next) => {
   db.query(`SELECT lfuID FROM linkingsFollowingUser WHERE lfuFollowerUserLID=? AND lfuFollowingUserLID=? LIMIT 1`, 
   [req.auth.user_id, parseInt(req.body.user_id)], (e,r,f) => {
@@ -284,6 +282,7 @@ router.post('/profile', (req,res,next) => {
     }else{ res.status(400).json( { success: false, error: 'Failted to fetch following this.' } ) }
   });
 });  
+// Response data
 router.post('/profile', (req,res,next) => {
   res.status(200).json( { success: true,
                           user_id: parseInt(req.body.user_id),
@@ -299,6 +298,7 @@ router.post('/profile', (req,res,next) => {
                           last_seen_time :  timeFormatting.unixTimeAsDate(req.userData.userLastSeenTime),
                           last_seen_time_ago: timeFormatting.timeAgo(req.userData.userLastSeenTime) } );
 });
+
 /**
  * @api {post} /users/create-user-account Create new User Account
  * @apiName create-user-account
@@ -326,18 +326,22 @@ router.post('/create-user-account', (req,res,next) => {
     res.status(400).json({success: false, error: 'Params username, password and email are required!'});
   }
 });
+// check username format
 router.post('/create-user-account', (req,res,next) => {
   const isAcceptable = user.isUsernameAcceptable(req.body.username);
   if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable });
 });
+// check email format
 router.post('/create-user-account', (req,res,next) => {
   const isAcceptable = user.isEmailAcceptable(req.body.email);
   if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable });
 });
+// check password format
 router.post('/create-user-account', (req,res,next) => {
   const isAcceptable = user.isPasswordAcceptable(req.body.password);
   if ( isAcceptable == 'yes' ) next(); else res.status(400).json({success: false, error: isAcceptable});
 });
+// check, is the username available (not in use)
 router.post('/create-user-account', (req,res,next) => {
   user.isUsernameAvailable(req.body.username).then( (isAvailable) => {
     if ( isAvailable ) {
@@ -347,6 +351,7 @@ router.post('/create-user-account', (req,res,next) => {
     }
   });
 });
+// check is email available
 router.post('/create-user-account', (req,res,next) => {
   user.isEmailAvailable(req.body.email).then( (isAvailable) => {
     if ( isAvailable ) {
@@ -356,6 +361,7 @@ router.post('/create-user-account', (req,res,next) => {
     }
   });
 });
+// Insert data into the DB
 router.post('/create-user-account', (req,res,next) => {
   // Everything is ok, let's create user!
   db.query("INSERT INTO `users` (userName, userPassword, userEmail, userGroupLID, userCreateTime, userLastSeenTime, userVerified) VALUES (?, ?, ?, ?, ?, 0, 0)", 
@@ -448,15 +454,16 @@ router.delete('/', (req,res,next) => {
 router.delete('/', (req,res,next) => {
   user.getAllPostIDsByUser(req.body.user_id).then( (userPostIDs) => {
     req.user_posts = userPostIDs;
-    // TODO: delete actual media files
+    // delete actual media files here
     next();
   });  
 });
 router.delete('/', (req,res,next) => {
   next();
 });
+// delete user from the db
 router.delete('/', (req,res,next) => {
-  console.log(`DELETE FROM users WHERE userID=? LIMIT 1`);
+  console.log(`User ID: ${req.body.user_id} deleted.`);
   db.query(`DELETE FROM users WHERE userID=? LIMIT 1`, 
   parseInt(req.body.user_id), (e,r,f) => {
     if ( e ) {
@@ -496,6 +503,7 @@ router.post('/', (req,res,next) => {
     }
   });
 });
+// fetch users
 router.post('/', (req,res,next) => {
   console.log((req.body.search_term ? '%'+req.body.search_term+'%' : '' ));
   db.query(`SELECT userID, userName FROM users ${(req.body.search_term ? ' WHERE userName LIKE ?' : '')} ORDER BY userName ASC LIMIT 100`, 
@@ -539,6 +547,7 @@ router.post('/get-user-id', (req,res,next) => {
     res.status(400).json( { success: false, error: 'Parameter user_name is required' } );
   }
 });
+// check session
 router.post('/get-user-id', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
@@ -548,6 +557,7 @@ router.post('/get-user-id', (req,res,next) => {
     }
   });
 });
+// fetch data from the database
 router.post('/get-user-id', (req,res,next) => {
   db.query(`SELECT userID FROM users  WHERE userName=? ORDER BY userName ASC LIMIT 1`, 
   [req.body.user_name], (e,r,f) => {

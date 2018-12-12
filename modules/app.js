@@ -57,25 +57,6 @@ app.use((e, req, res, next) => {
   res.json({ success : 0, error: e.message });
 });
 
-// >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-// *** REMOVE THIS IN THE PRODUCTION VERSION AND WHEN DB CONNECTION ISSUE IS FIXED >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
 const db = require('./db');
-
-setInterval(() => {
-   console.log('[MEOW!] Meow is a script that annoys and pisses you off. It is a loop that continues and continues calling the database.');
-   db.query("SELECT userID FROM users WHERE userID=1", '', (e,r,f) => {
-     if ( e == null ) {
-       if ( r.length == 1 ) {
-         console.log('DB_connection_status = OK');
-       }else{
-        console.log('DB_connection_status = ERROR');
-       }
-     }else{ console.log('DB_connection_status = ERROR'); }
-  });
-  }, 60000);
-
-  // *** <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< REMOVE THIS IN THE PRODUCTION VERSION AND WHEN DB CONNECTION ISSUE IS FIXED
-  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 module.exports = app;

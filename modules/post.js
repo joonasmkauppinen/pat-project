@@ -32,21 +32,22 @@ const postExists = (postID) => {
 
 /* Deletes all the linkings to one post (tags, comments, content reports and pet linkings) */
 const deleteAllPostLinkings = (postID) => {
-return new Promise((resolve, reject) => {
-  tag.removeAllTagsFromPost(postID).then((removeTagsSuccess) => {
+
+  return new Promise((resolve, reject) => {
+    tag.removeAllTagsFromPost(postID).then((removeTagsSuccess) => {
     comment.removeAllCommentsForPost(postID).then((removeCommentsSuccess) => {
-      contentreport.removeAllContentReportsForPost(postID).then((removeCRSuccess) => {
-        pet.removePetLinkingsForPost(postID).then((removePetSuccess) => {
-          if ( removePetSuccess && removeCRSuccess && removeCommentsSuccess && removeTagsSuccess ) {
-            resolve(true);
-          }else{
-            resolve(false);
-          }
-        });
-      });
-    });
-  });
-});  
+    contentreport.removeAllContentReportsForPost(postID).then((removeCRSuccess) => {
+    pet.removePetLinkingsForPost(postID).then((removePetSuccess) => {
+
+        if ( removePetSuccess && removeCRSuccess && removeCommentsSuccess && removeTagsSuccess ) {
+          resolve(true);
+        }else{
+          resolve(false);
+        }
+
+    }); }); }); });
+  });  
+
 };
 
 
