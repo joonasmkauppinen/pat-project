@@ -1,0 +1,506 @@
+-- phpMyAdmin SQL Dump
+-- version 4.8.3
+-- https://www.phpmyadmin.net/
+--
+-- Host: localhost
+-- Generation Time: Dec 11, 2018 at 09:27 PM
+-- Server version: 5.6.41
+-- PHP Version: 7.0.32
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+SET AUTOCOMMIT = 0;
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+--
+-- Database: `pat`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `comments`
+--
+
+CREATE TABLE `comments` (
+  `commentID` int(11) NOT NULL,
+  `commentPostLID` int(11) NOT NULL,
+  `commentUserLID` int(11) NOT NULL,
+  `commentAddTime` int(11) NOT NULL,
+  `comment` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `contentReports`
+--
+
+CREATE TABLE `contentReports` (
+  `crID` int(11) NOT NULL,
+  `crPostLID` int(11) NOT NULL,
+  `crReportTime` int(11) NOT NULL,
+  `crReportedBy` int(11) NOT NULL,
+  `crReportTypeLID` int(11) NOT NULL,
+  `crDescription` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL,
+  `crReportChecked` int(1) NOT NULL DEFAULT '0'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `contentReportTypes`
+--
+
+CREATE TABLE `contentReportTypes` (
+  `crtID` int(11) NOT NULL,
+  `crt` varchar(64) COLLATE utf8_bin NOT NULL,
+  `crtUrgency` int(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `linkingsFollowingUser`
+--
+
+CREATE TABLE `linkingsFollowingUser` (
+  `lfuID` int(11) NOT NULL,
+  `lfuFollowerUserLID` int(11) NOT NULL,
+  `lfuFollowingUserLID` int(11) NOT NULL,
+  `lfuFollowingStarted` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `linkingsPermissionToGroup`
+--
+
+CREATE TABLE `linkingsPermissionToGroup` (
+  `lptgID` int(11) NOT NULL,
+  `lptgGroupLID` int(11) NOT NULL,
+  `lptgPermissionLID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `linkingsPetToPost`
+--
+
+CREATE TABLE `linkingsPetToPost` (
+  `lptpID` int(11) NOT NULL,
+  `lptpPetLID` int(11) NOT NULL,
+  `lptpPostLID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `linkingsTagToPost`
+--
+
+CREATE TABLE `linkingsTagToPost` (
+  `lttpID` int(11) NOT NULL,
+  `lttpPostLID` int(11) NOT NULL,
+  `lttpTagLID` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `pets`
+--
+
+CREATE TABLE `pets` (
+  `petID` int(11) NOT NULL,
+  `petOwnerLID` int(11) NOT NULL,
+  `pet` varchar(16) COLLATE utf8_bin NOT NULL,
+  `petDescription` text CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `posts`
+--
+
+CREATE TABLE `posts` (
+  `postID` int(11) NOT NULL,
+  `postAddTime` int(11) NOT NULL,
+  `postAddedBy` int(11) NOT NULL,
+  `postMediaType` char(1) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `postMimeType` varchar(16) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `postMediaURI` varchar(255) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `postColor` char(6) CHARACTER SET utf8 COLLATE utf8_bin NOT NULL,
+  `post` text COLLATE utf8mb4_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ratings`
+--
+
+CREATE TABLE `ratings` (
+  `rateID` int(11) NOT NULL,
+  `ratingPostLID` int(11) NOT NULL,
+  `ratingByUserLID` int(11) NOT NULL,
+  `rating` int(1) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sessions`
+--
+
+CREATE TABLE `sessions` (
+  `sessionID` int(11) NOT NULL,
+  `sessionUserLID` int(11) NOT NULL,
+  `sessionStartTime` int(11) NOT NULL,
+  `sessionLastActive` int(11) NOT NULL,
+  `sessionToken` varchar(64) COLLATE utf8_bin NOT NULL,
+  `sessionIP` varchar(39) COLLATE utf8_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tags`
+--
+
+CREATE TABLE `tags` (
+  `tagID` int(11) NOT NULL,
+  `tag` varchar(16) COLLATE utf8_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `userGroups`
+--
+
+CREATE TABLE `userGroups` (
+  `ugID` int(11) NOT NULL,
+  `ugName` varchar(32) COLLATE utf8_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `userPermissions`
+--
+
+CREATE TABLE `userPermissions` (
+  `upID` int(11) NOT NULL,
+  `upName` varchar(32) COLLATE utf8_bin NOT NULL,
+  `upDescription` varchar(128) COLLATE utf8_bin NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `userID` int(11) NOT NULL,
+  `userName` varchar(16) COLLATE utf8_bin NOT NULL,
+  `userPassword` char(64) COLLATE utf8_bin NOT NULL,
+  `userEmail` varchar(255) COLLATE utf8_bin NOT NULL,
+  `userGroupLID` int(11) NOT NULL,
+  `userCreateTime` int(11) NOT NULL,
+  `userLastSeenTime` int(11) NOT NULL,
+  `userVerified` int(1) NOT NULL DEFAULT '0',
+  `userDescription` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT ''
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `comments`
+--
+ALTER TABLE `comments`
+  ADD PRIMARY KEY (`commentID`),
+  ADD KEY `commentPostLID` (`commentPostLID`),
+  ADD KEY `commentUserLID` (`commentUserLID`);
+
+--
+-- Indexes for table `contentReports`
+--
+ALTER TABLE `contentReports`
+  ADD PRIMARY KEY (`crID`),
+  ADD KEY `crPostLID` (`crPostLID`),
+  ADD KEY `crReportedBy` (`crReportedBy`),
+  ADD KEY `crReportTypeLID` (`crReportTypeLID`);
+
+--
+-- Indexes for table `contentReportTypes`
+--
+ALTER TABLE `contentReportTypes`
+  ADD PRIMARY KEY (`crtID`);
+
+--
+-- Indexes for table `linkingsFollowingUser`
+--
+ALTER TABLE `linkingsFollowingUser`
+  ADD PRIMARY KEY (`lfuID`),
+  ADD KEY `lfuFollowerUserLID` (`lfuFollowerUserLID`),
+  ADD KEY `lfuFollowingUserLID` (`lfuFollowingUserLID`);
+
+--
+-- Indexes for table `linkingsPermissionToGroup`
+--
+ALTER TABLE `linkingsPermissionToGroup`
+  ADD PRIMARY KEY (`lptgID`),
+  ADD KEY `upglGroupLID` (`lptgGroupLID`),
+  ADD KEY `upglPermissionLID` (`lptgPermissionLID`);
+
+--
+-- Indexes for table `linkingsPetToPost`
+--
+ALTER TABLE `linkingsPetToPost`
+  ADD PRIMARY KEY (`lptpID`),
+  ADD KEY `lptpPetLID` (`lptpPetLID`),
+  ADD KEY `lptpPostLID` (`lptpPostLID`);
+
+--
+-- Indexes for table `linkingsTagToPost`
+--
+ALTER TABLE `linkingsTagToPost`
+  ADD PRIMARY KEY (`lttpID`),
+  ADD KEY `postLID` (`lttpPostLID`),
+  ADD KEY `tagLID` (`lttpTagLID`);
+
+--
+-- Indexes for table `pets`
+--
+ALTER TABLE `pets`
+  ADD PRIMARY KEY (`petID`),
+  ADD KEY `petOwnerLID` (`petOwnerLID`);
+
+--
+-- Indexes for table `posts`
+--
+ALTER TABLE `posts`
+  ADD PRIMARY KEY (`postID`),
+  ADD KEY `postAddedBy` (`postAddedBy`);
+
+--
+-- Indexes for table `ratings`
+--
+ALTER TABLE `ratings`
+  ADD PRIMARY KEY (`rateID`),
+  ADD KEY `ratingPostLID` (`ratingPostLID`),
+  ADD KEY `ratingByUserLID` (`ratingByUserLID`);
+
+--
+-- Indexes for table `sessions`
+--
+ALTER TABLE `sessions`
+  ADD PRIMARY KEY (`sessionID`),
+  ADD KEY `sessionUserLID` (`sessionUserLID`);
+
+--
+-- Indexes for table `tags`
+--
+ALTER TABLE `tags`
+  ADD PRIMARY KEY (`tagID`);
+
+--
+-- Indexes for table `userGroups`
+--
+ALTER TABLE `userGroups`
+  ADD PRIMARY KEY (`ugID`);
+
+--
+-- Indexes for table `userPermissions`
+--
+ALTER TABLE `userPermissions`
+  ADD PRIMARY KEY (`upID`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`userID`),
+  ADD UNIQUE KEY `userName` (`userName`),
+  ADD UNIQUE KEY `userEmail` (`userEmail`),
+  ADD KEY `userGroup` (`userGroupLID`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `comments`
+--
+ALTER TABLE `comments`
+  MODIFY `commentID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `contentReports`
+--
+ALTER TABLE `contentReports`
+  MODIFY `crID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `contentReportTypes`
+--
+ALTER TABLE `contentReportTypes`
+  MODIFY `crtID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `linkingsFollowingUser`
+--
+ALTER TABLE `linkingsFollowingUser`
+  MODIFY `lfuID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `linkingsPermissionToGroup`
+--
+ALTER TABLE `linkingsPermissionToGroup`
+  MODIFY `lptgID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `linkingsPetToPost`
+--
+ALTER TABLE `linkingsPetToPost`
+  MODIFY `lptpID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `linkingsTagToPost`
+--
+ALTER TABLE `linkingsTagToPost`
+  MODIFY `lttpID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `pets`
+--
+ALTER TABLE `pets`
+  MODIFY `petID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `posts`
+--
+ALTER TABLE `posts`
+  MODIFY `postID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `ratings`
+--
+ALTER TABLE `ratings`
+  MODIFY `rateID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `sessions`
+--
+ALTER TABLE `sessions`
+  MODIFY `sessionID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `tags`
+--
+ALTER TABLE `tags`
+  MODIFY `tagID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `userGroups`
+--
+ALTER TABLE `userGroups`
+  MODIFY `ugID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `userPermissions`
+--
+ALTER TABLE `userPermissions`
+  MODIFY `upID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `userID` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `comments`
+--
+ALTER TABLE `comments`
+  ADD CONSTRAINT `comments_ibfk_1` FOREIGN KEY (`commentPostLID`) REFERENCES `posts` (`postID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `comments_ibfk_2` FOREIGN KEY (`commentUserLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `contentReports`
+--
+ALTER TABLE `contentReports`
+  ADD CONSTRAINT `contentReports_ibfk_1` FOREIGN KEY (`crPostLID`) REFERENCES `posts` (`postID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `contentReports_ibfk_2` FOREIGN KEY (`crReportTypeLID`) REFERENCES `contentReportTypes` (`crtID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `contentReports_ibfk_3` FOREIGN KEY (`crReportedBy`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `linkingsFollowingUser`
+--
+ALTER TABLE `linkingsFollowingUser`
+  ADD CONSTRAINT `linkingsFollowingUser_ibfk_1` FOREIGN KEY (`lfuFollowerUserLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `linkingsFollowingUser_ibfk_2` FOREIGN KEY (`lfuFollowingUserLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `linkingsPermissionToGroup`
+--
+ALTER TABLE `linkingsPermissionToGroup`
+  ADD CONSTRAINT `linkingsPermissionToGroup_ibfk_1` FOREIGN KEY (`lptgGroupLID`) REFERENCES `userGroups` (`ugID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `linkingsPermissionToGroup_ibfk_2` FOREIGN KEY (`lptgPermissionLID`) REFERENCES `userPermissions` (`upID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `linkingsPetToPost`
+--
+ALTER TABLE `linkingsPetToPost`
+  ADD CONSTRAINT `linkingsPetToPost_ibfk_1` FOREIGN KEY (`lptpPostLID`) REFERENCES `posts` (`postID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `linkingsPetToPost_ibfk_2` FOREIGN KEY (`lptpPetLID`) REFERENCES `pets` (`petID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `linkingsTagToPost`
+--
+ALTER TABLE `linkingsTagToPost`
+  ADD CONSTRAINT `linkingsTagToPost_ibfk_1` FOREIGN KEY (`lttpPostLID`) REFERENCES `posts` (`postID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `linkingsTagToPost_ibfk_2` FOREIGN KEY (`lttpTagLID`) REFERENCES `tags` (`tagID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `pets`
+--
+ALTER TABLE `pets`
+  ADD CONSTRAINT `pets_ibfk_1` FOREIGN KEY (`petOwnerLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `posts`
+--
+ALTER TABLE `posts`
+  ADD CONSTRAINT `posts_ibfk_1` FOREIGN KEY (`postAddedBy`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `ratings`
+--
+ALTER TABLE `ratings`
+  ADD CONSTRAINT `ratings_ibfk_1` FOREIGN KEY (`ratingByUserLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE,
+  ADD CONSTRAINT `ratings_ibfk_2` FOREIGN KEY (`ratingPostLID`) REFERENCES `posts` (`postID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `sessions`
+--
+ALTER TABLE `sessions`
+  ADD CONSTRAINT `sessions_ibfk_1` FOREIGN KEY (`sessionUserLID`) REFERENCES `users` (`userID`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `users`
+--
+ALTER TABLE `users`
+  ADD CONSTRAINT `users_ibfk_1` FOREIGN KEY (`userGroupLID`) REFERENCES `userGroups` (`ugID`);
+COMMIT;

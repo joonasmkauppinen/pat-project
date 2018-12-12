@@ -369,7 +369,7 @@ router.post('/create-user-account', (req,res,next) => {
 });
                 
 /**
- * @api {delete} /users Delete User #_IN_PROGRESS_#
+ * @api {delete} /users Delete User
  * @apiName users/delete
  * @apiVersion 1.0.0
  * @apiGroup Users
@@ -393,6 +393,7 @@ router.delete('/', (req,res,next) => {
     res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
   }
 });
+// Session check
 router.delete('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
@@ -408,6 +409,7 @@ router.delete('/', (req,res,next) => {
     }
   });
 });
+// Check does the user exists
 router.delete('/', (req,res,next) => {
   if ( req.body.user_id != req.user_id ) {
     user.getUser(req.body.user_id).then( (usr) => {
@@ -421,6 +423,7 @@ router.delete('/', (req,res,next) => {
     next();
   }
 });
+// Check permissions
 router.delete('/', (req,res,next) => {
   if ( req.body.user_id == req.user_id ) {
     // User is deleting its own account.
@@ -434,22 +437,27 @@ router.delete('/', (req,res,next) => {
     }
   }
 });
+// Get all post ID's for file deletion
 router.delete('/', (req,res,next) => {
   user.getAllPostIDsByUser(req.body.user_id).then( (userPostIDs) => {
     req.user_posts = userPostIDs;
+    // TODO: delete actual media files
     next();
   });  
 });
 router.delete('/', (req,res,next) => {
-  // TODO: delete files
   next();
 });
 router.delete('/', (req,res,next) => {
   console.log(`DELETE FROM users WHERE userID=? LIMIT 1`);
-  next();
-});
-router.delete('/', (req,res,next) => {
-  res.status(400).json( { success: false, error: 'TODO' } );
+  db.query(`DELETE FROM users WHERE userID=? LIMIT 1`, 
+  parseInt(req.body.user_id), (e,r,f) => {
+    if ( e ) {
+      res.status(400).json( { success: false, error: 'Database query failed.' } );
+    }else{
+      res.status(200).json( { success: true } );
+    }
+  });    
 });
 module.exports = router;
 
