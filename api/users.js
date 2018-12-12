@@ -94,6 +94,7 @@ router.patch('/', upload.single('upload_file'), (req,res,next) => {
     next();
   }
 });
+//  Check user parameters
 router.patch('/', (req,res,next) => {
   if ( global.issetIsNumeric ( req.body.user_id ) ) {
     next();
@@ -101,6 +102,7 @@ router.patch('/', (req,res,next) => {
     res.status(400).json( { success: false, error: 'Parameter user_id is required and it must be a number.' } );
   }
 });
+// Check session
 router.patch('/', (req,res,next) => {
   auth(req).then( (r) => {
     if ( r.session ) {
@@ -116,6 +118,7 @@ router.patch('/', (req,res,next) => {
     }
   });
 });
+// Check User
 router.patch('/', (req,res,next) => {
   if ( req.body.user_id != req.user_id ) {
     user.getUser(req.body.user_id).then( (usr) => {
@@ -129,6 +132,7 @@ router.patch('/', (req,res,next) => {
     next();
   }
 });
+// Check permissions
 router.patch('/', (req,res,next) => {
   if ( req.body.user_id == req.user_id ) {
     // User is modifying its own account.
@@ -142,6 +146,7 @@ router.patch('/', (req,res,next) => {
     }
   }
 });
+// Update data
 router.patch('/', (req,res,next) => {
   if ( typeof req.body.description != 'undefined' ) {
     db.query(`UPDATE users SET userDescription=? WHERE userID=? LIMIT 1`, 
@@ -154,6 +159,7 @@ router.patch('/', (req,res,next) => {
     });
   }
 });
+// Update user profile Image if it is uploaded
 router.patch('/', (req,res,next) => {
   if ( req.file_uploaded ) {
     const imgFile = './public/img/usr/' + parseInt(req.body.user_id) + '.png';
@@ -167,6 +173,7 @@ router.patch('/', (req,res,next) => {
 router.patch('/', (req,res,next) => {
   res.status(200).json( { success: true } );  
 });
+
 /**
  * @api {post} /users/profile User Profile Data
  * @apiName users-profile
